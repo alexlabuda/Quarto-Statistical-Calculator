@@ -18,9 +18,16 @@ editor_options:
   chunk_output_type: console
 params:
   sample_size_A: 10000
-  sample_size_B: 10000
   success_A: 1984
+  sample_size_B: 10000
   success_B: 2024
+  
+  visitors_A: 80000
+  conversions_A: 1600
+  confidence_level: 0.90
+  
+  visitors_B: 80000
+  conversions_B: 1700
 ---
 
 ```{r setup, include=FALSE}
@@ -83,4 +90,106 @@ df |>
     legend.position = "bottom"
     )
 ```
+
+
+```{r, include=FALSE, warning=FALSE, message=FALSE}
+rate_A <- params$conversions_A / params$visitors_A
+rate_B <- params$conversions_B / params$visitors_B
+
+# Pooled conversion rate
+overall_rate <- (params$conversions_A + params$conversions_B) / (params$visitors_A + params$visitors_B)
+
+# Z-Score for p-value calculation
+z_score <- (rate_B - rate_A) / sqrt(overall_rate * (1 - overall_rate) * (1/params$visitors_A + 1/params$visitors_B))
+
+# P-Value for a one-sided test
+p_value <- pnorm(z_score, lower.tail = FALSE)
+
+# Z-Score for 90% Confidence Level (One-Sided)
+z_score_CL <- qnorm(params$confidence_level)
+
+# Confidence Interval for Variation A
+se_A <- sqrt(rate_A * (1 - rate_A) / params$visitors_A)
+ci_lower_A <- rate_A - z_score_CL * se_A
+ci_upper_A <- rate_A + z_score_CL * se_A
+
+# Confidence Interval for Variation B
+se_B <- sqrt(rate_B * (1 - rate_B) / params$visitors_B)
+ci_lower_B <- rate_B - z_score_CL * se_B
+ci_upper_B <- rate_B + z_score_CL * se_B
+
+```
+
+
+## Hypothesis test
+
+Confidence level is `r params$confidence_level*100`%.
+
+Reject the NULL hypothesis if the P-Value is less than `r 1-params$confidence_level`.
+
+The P-Value for a one-sided test is `r round(p_value, 3)`.
+
+90% Confidence Interval for Variation A is `r round(ci_lower_A, 3)` to `r round(ci_upper_A, 3)`.
+
+90% Confidence Interval for Variation B is `r round(ci_lower_B, 3)` to `r round(ci_upper_B, 3)`.
+
+```{r include=FALSE, warning=FALSE, message=FALSE}
+# Define labels and errors for the confidence intervals
+labels <- c('Control', 'Variant 1')
+conversion_rates <- c(rate_A, rate_B)
+ci_lower_bounds <- c(ci_lower_A, ci_lower_B)
+ci_upper_bounds <- c(ci_upper_A, ci_upper_B)
+errors <- c(ci_upper_A - rate_A, ci_upper_B - rate_B)
+
+# Create a data frame for plotting
+data <- data.frame(
+  Variation = factor(labels, levels = rev(labels)),
+  ConversionRate = conversion_rates,
+  CIError = errors,
+  Lower = ci_lower_bounds,
+  Upper = ci_upper_bounds
+)
+
+max_y_lim <- max(data$Upper)
+```
+
+
+## Confidence intervals
+
+```{r echo=FALSE, fig.width=9, fig.height=4.5, warning=FALSE, message=FALSE}
+my_colors <- c("#3F51B5", "#D81B60")
+
+# Create the horizontal bar plot with confidence intervals
+p <- ggplot(data, aes(x = Variation, y = ConversionRate)) +
+  geom_bar(stat = "identity", aes(fill = Variation), position = position_dodge(),
+           show.legend = FALSE, alpha = 0.8) +
+  geom_errorbar(aes(ymin = ConversionRate - CIError, ymax = ConversionRate + CIError), width = 0.15, alpha = 0.8) +
+  coord_flip() +  # Flip the coordinates to make the bars horizontal
+  labs(
+    title = NULL,
+    x     = NULL, y = "Conversion Rate"
+  ) + 
+  ylim(0, max_y_lim *1.15) +
+  theme_minimal() +
+  theme(
+    legend.position = "none"
+    ) +
+    scale_fill_manual(values = my_colors)
+
+# Adding the confidence intervals as text on the bars
+p <- 
+  p + geom_text(
+    aes(x = Variation, y = ConversionRate + CIError,
+        label = paste(sprintf('%.1f%%', Lower * 100), '-', sprintf('%.1f%%', Upper * 100))),
+    position = position_dodge(0.9), hjust = -0.2,
+    alpha = 0.85)
+
+# Print the plot
+p
+```
+
+
+
+
+
 
