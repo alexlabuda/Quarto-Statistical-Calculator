@@ -1,0 +1,37 @@
+---
+title: "Statistical Test Report"
+subtitle: "Company ABC"
+author: "Zion & Zion"
+format: 
+  html:
+    page-layout: full
+    embed-resources: true
+    toc: true
+    toc-depth: 2
+    number-sections: false
+    title-block-banner: images/2023_Zion & Zion Linkedin Background_Employees_2.jpg
+editor: visual
+theme:
+  - styles/theme-custom.scss
+editor_options: 
+  chunk_output_type: console
+---
+
+
+## Header 1
+
+Some text
+
+```{r}
+
+```
+
+
+## Header 2
+
+Some more text
+
+```{r}
+
+```
+
