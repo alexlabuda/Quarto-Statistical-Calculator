@@ -16,11 +16,12 @@ theme:
   - styles/theme-custom.scss
 editor_options: 
   chunk_output_type: console
+  
 params:
   sample_size_A: 10000
   success_A: 1984
   sample_size_B: 10000
-  success_B: 2024
+  success_B: 1950
   
   visitors_A: 80000
   conversions_A: 1600
