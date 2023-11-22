@@ -129,9 +129,9 @@ Reject the NULL hypothesis if the P-Value is less than `r 1-params$confidence_le
 
 The P-Value for a one-sided test is `r round(p_value, 3)`.
 
-90% Confidence Interval for Variation A is `r round(ci_lower_A, 3)` to `r round(ci_upper_A, 3)`.
+90% Confidence Interval for Variation A is `r round(ci_lower_A, 3)*100`% to `r round(ci_upper_A, 3)*100`%.
 
-90% Confidence Interval for Variation B is `r round(ci_lower_B, 3)` to `r round(ci_upper_B, 3)`.
+90% Confidence Interval for Variation B is `r round(ci_lower_B, 3)*100`% to `r round(ci_upper_B, 3)*100`%.
 
 ```{r include=FALSE, warning=FALSE, message=FALSE}
 # Define labels and errors for the confidence intervals
