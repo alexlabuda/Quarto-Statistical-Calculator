@@ -1,0 +1,55 @@
+/* CSS */
+/*-- scss:defaults --*/
+body {
+  font-family: "Avenir", sans-serif;
+  color: #333333;
+  background-color: #f4f4f4;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #2a2a2a;
+}
+
+a {
+  color: #E91E63;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #E91E63;
+  text-decoration: underline;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+table th, table td {
+  text-align: left;
+  padding: 8px;
+  border-bottom: 1px solid #dddddd;
+}
+
+table th {
+  background-color: #e7e7e7;
+}
+
+pre {
+  background-color: #eeeeee;
+  border: 1px solid #e1e1e1;
+  padding: 10px;
+  overflow-x: auto;
+}
+
+nav.toc .toc-link {
+  color: #333333;
+}
+
+nav.toc .toc-link:hover, nav.toc .toc-link:focus {
+  color: #E91E63;
+}
+
+nav.toc .active > .toc-link {
+  color: #c1134e;
+}
