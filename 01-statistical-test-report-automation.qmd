@@ -53,7 +53,6 @@ sim_B <- rbeta(10000, post_B[1], post_B[2])
 prob_B_better_than_A <- mean(sim_B > sim_A)
 ```
 
-
 ## Test results
 
 The probability that B is better than A is `r round(prob_B_better_than_A, 3)*100`%.
@@ -92,7 +91,6 @@ df |>
     )
 ```
 
-
 ```{r, include=FALSE, warning=FALSE, message=FALSE}
 rate_A <- params$conversions_A / params$visitors_A
 rate_B <- params$conversions_B / params$visitors_B
@@ -120,7 +118,6 @@ ci_lower_B <- rate_B - z_score_CL * se_B
 ci_upper_B <- rate_B + z_score_CL * se_B
 
 ```
-
 
 ## Hypothesis test
 
@@ -153,7 +150,6 @@ data <- data.frame(
 
 max_y_lim <- max(data$Upper)
 ```
-
 
 ## Confidence intervals
 
@@ -188,9 +184,3 @@ p <-
 # Print the plot
 p
 ```
-
-
-
-
-
-

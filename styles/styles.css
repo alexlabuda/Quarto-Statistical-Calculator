@@ -1,0 +1,9 @@
+.quarto-title-block .quarto-title-banner {
+  background-image: url(images/ZZ-logo.png), url(images/ZZ-logo.png);
+  background-size: 11%, 11%;
+  background-position: right, left;
+  background-repeat: no-repeat;
+  background-origin: content-box;
+  background-origin: content-box;
+}
+
