@@ -16,23 +16,71 @@ theme:
   - styles/theme-custom.scss
 editor_options: 
   chunk_output_type: console
+params:
+  sample_size_A: 10000
+  sample_size_B: 10000
+  success_A: 1984
+  success_B: 2024
 ---
 
+```{r setup, include=FALSE}
+# install.packages("BayesFactor")
+library(BayesFactor)
+library(tidyverse)
+theme_set(theme_minimal())
 
-## Header 1
+# Using a uniform prior Beta(1,1)
+prior <- c(1, 1)
 
-Some text
+# Calculating posterior distributions
+post_A <- c(params$success_A + prior[1], params$sample_size_A - params$success_A + prior[2])
+post_B <- c(params$success_B + prior[1], params$sample_size_B - params$success_B + prior[2])
 
-```{r}
+# Simulating from the posterior distributions
+set.seed(123)
+sim_A <- rbeta(10000, post_A[1], post_A[2])
+sim_B <- rbeta(10000, post_B[1], post_B[2])
 
+# Probability that B is better than A
+prob_B_better_than_A <- mean(sim_B > sim_A)
 ```
 
 
-## Header 2
+## Test results
 
-Some more text
+The probability that B is better than A is `r round(prob_B_better_than_A, 3)*100`%.
 
-```{r}
+```{r echo=FALSE, fig.width=9, fig.height=4.5, warning=FALSE, message=FALSE}
+max_x_lim <- max(max(sim_A), max(sim_B))
+min_x_lim <- min(min(sim_A), min(sim_B))
 
+
+# Create a sequence of conversion rates
+x <- seq(0, 1, length.out = 1000)
+
+# Calculate densities
+density_A <- dbeta(x, post_A[1], post_A[2])
+density_B <- dbeta(x, post_B[1], post_B[2])
+
+# Create a data frame for plotting
+df <- data.frame(x, Group_A = density_A, Group_B = density_B)
+
+# Plotting
+df |>
+  ggplot(aes(x)) +
+  geom_line(aes(y = Group_A, colour = "Group A"), linewidth = 0.8) +
+  geom_line(aes(y = Group_B, colour = "Group B"), linewidth = 0.8) +
+  labs(
+    title = NULL,
+    x     = "Conversion Rate", y = "Density") +
+  scale_colour_manual(
+    "",
+    breaks = c("Group A", "Group B"),
+    values = c("Group A" = "#3F51B5", "Group B" = "#D81B60")
+  ) +
+  xlim(min_x_lim, max_x_lim) +
+  theme(
+    legend.position = "bottom"
+    )
 ```
 
