@@ -8,6 +8,7 @@ description: "A/B Testing Results"
 title-block-banner: "#FFFFFF"
 format: 
   html:
+    self_contained: true
     page-layout: full
     embed-resources: true
     smooth-scroll: true
