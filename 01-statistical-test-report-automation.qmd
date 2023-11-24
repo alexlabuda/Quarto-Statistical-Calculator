@@ -1,21 +1,25 @@
 ---
-title: "Statistical Test Report"
+title: "Statistical Testing Results"
 subtitle: "Company ABC"
 author: "Zion & Zion"
+date: last-modified
+date-format: "MM-DD-YYYY"
+description: "A/B Testing Results"
+title-block-banner: "#FFFFFF"
 format: 
   html:
     page-layout: full
     embed-resources: true
+    smooth-scroll: true
+    fontcolor: black
     toc: true
-    toc-depth: 2
-    number-sections: false
-    title-block-banner: images/Untitled design.png
-editor: visual
+    toc-location: left
+    toc-title: Summary
+    toc-depth: 3
 theme:
   - journal
   - styles/theme-custom.scss
-editor_options: 
-  chunk_output_type: console
+css: styles/styles.css
   
 params:
   sample_size_A: 10000
@@ -53,9 +57,25 @@ sim_B <- rbeta(10000, post_B[1], post_B[2])
 prob_B_better_than_A <- mean(sim_B > sim_A)
 ```
 
-## Test results
+## Overview
 
-The probability that B is better than A is `r round(prob_B_better_than_A, 3)*100`%.
+Company ABC has been experiencing a decline in the number of conversions on their website in the last six months. The marketing team has been tasked with increasing the number of conversions. 
+
+The team has decided on a new landing page to determine if it will increase the number of conversions. 
+
+Zion & Zion ran an A/B test to determine if a new landing page would increase the number of conversions. 
+
+The test was run for 30 days and the results are as follows:
+
+## Test Results
+
+::: {.panel-tabset}
+
+## Bayesian Test
+
+The probability that the new landing page (B) is better than the existing page (A) is `r round(prob_B_better_than_A, 3)*100`%.
+
+The following histograms show the posterior distributions for the conversion rates of the two landing pages:
 
 ```{r echo=FALSE, fig.width=9, fig.height=4.5, warning=FALSE, message=FALSE}
 max_x_lim <- max(max(sim_A), max(sim_B))
@@ -83,7 +103,7 @@ df |>
   scale_colour_manual(
     "",
     breaks = c("Group A", "Group B"),
-    values = c("Group A" = "#3F51B5", "Group B" = "#D81B60")
+    values = c("Group A" = "#2E465F", "Group B" = "#D81B60")
   ) +
   xlim(min_x_lim, max_x_lim) +
   theme(
@@ -119,13 +139,15 @@ ci_upper_B <- rate_B + z_score_CL * se_B
 
 ```
 
-## Hypothesis test
+## Frequentist Test
 
-Confidence level is `r params$confidence_level*100`%.
+**Test Specifications:**
 
-Reject the NULL hypothesis if the P-Value is less than `r 1-params$confidence_level`.
+    - Confidence level is `r params$confidence_level*100`%.
 
-The P-Value for a one-sided test is `r round(p_value, 3)`.
+    - Reject the NULL hypothesis if the P-Value is less than `r 1-params$confidence_level`.
+
+    - The P-Value for a one-sided test is `r round(p_value, 3)`.
 
 90% Confidence Interval for Variation A is `r round(ci_lower_A, 3)*100`% to `r round(ci_upper_A, 3)*100`%.
 
@@ -151,10 +173,10 @@ data <- data.frame(
 max_y_lim <- max(data$Upper)
 ```
 
-## Confidence intervals
+**Confidence intervals**
 
 ```{r echo=FALSE, fig.width=9, fig.height=4.5, warning=FALSE, message=FALSE}
-my_colors <- c("#3F51B5", "#D81B60")
+my_colors <- c("#2E465F", "#D81B60")
 
 # Create the horizontal bar plot with confidence intervals
 p <- ggplot(data, aes(x = Variation, y = ConversionRate)) +
@@ -184,3 +206,6 @@ p <-
 # Print the plot
 p
 ```
+
+
+:::
