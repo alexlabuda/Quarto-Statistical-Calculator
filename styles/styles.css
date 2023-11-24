@@ -1,8 +1,8 @@
 .quarto-title-block .quarto-title-banner {
-  background: url(images/zz_linkedin.jpg), linear-gradient(90deg, rgba(73,114,143,1) 0%, rgba(73,114,143,1) 60%,  rgba(46,70,95,1) 100%);
+  background: url(https://media.licdn.com/dms/image/D4D16AQHvMvhD6nU7lg/profile-displaybackgroundimage-shrink_350_1400/0/1692115751904?e=1706140800&v=beta&t=y-KqHGCE4kE9qDP_Usj_lNNS80tFIOHwn2IsaNiEjMY), linear-gradient(90deg, rgba(73,114,143,1) 0%, rgba(73,114,143,1) 75%,  rgba(46,70,95,1) 100%);
   background-size: contain;
   background-position: center right;
   background-repeat: no-repeat;
-  padding-right: 120px;
+  padding-right: 150px;
 }
 

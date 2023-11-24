@@ -56,7 +56,30 @@ sim_B <- rbeta(10000, post_B[1], post_B[2])
 
 # Probability that B is better than A
 prob_B_better_than_A <- mean(sim_B > sim_A)
+
+# Data
+data_tbl <- read_csv("data/report_212300_1700686614813.csv") |> 
+  janitor::clean_names() 
 ```
+
+```{r, include=FALSE}
+data_tbl |> glimpse()
+
+# Should we be filtering by only NEW visitors?
+# We have duplicated visitor_code - how should we handle this?
+# Should we keep only distinct visitor_code, experiment_brian_a_a_test_4_assignation combinations?
+
+data_tbl |> 
+  distinct(visitor_code, experiment_brian_a_a_test_4_assignation, .keep_all = TRUE) |> 
+  group_by(experiment_brian_a_a_test_4_assignation) |> 
+  summarise(
+    count_visitors = n_distinct(visitor_code),
+    success_A      = sum(goal_insights_page),
+    success_B      = sum(goal_contact_us_page)
+  )
+  
+```
+
 
 ## Overview
 
