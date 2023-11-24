@@ -1,9 +1,8 @@
 .quarto-title-block .quarto-title-banner {
-  background-image: url(images/ZZ-logo.png), url(images/ZZ-logo.png);
-  background-size: 11%, 11%;
-  background-position: right, left;
+  background: url(images/zz_linkedin.jpg), linear-gradient(90deg, rgba(73,114,143,1) 0%, rgba(73,114,143,1) 60%,  rgba(46,70,95,1) 100%);
+  background-size: contain;
+  background-position: center right;
   background-repeat: no-repeat;
-  background-origin: content-box;
-  background-origin: content-box;
+  padding-right: 120px;
 }
 
