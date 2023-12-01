@@ -23,10 +23,10 @@ theme:
 css: styles/styles.css
   
 params:
-  sample_size_A: 10000
-  success_A: 1984
-  sample_size_B: 10000
-  success_B: 1950
+  sample_size_A: 8500
+  success_A: 1500
+  sample_size_B: 8500
+  success_B: 1410
   
   visitors_A: 80000
   conversions_A: 1600
@@ -62,6 +62,8 @@ data_tbl <- read_csv("data/report_212300_1700686614813.csv") |>
   janitor::clean_names() 
 ```
 
+
+
 ```{r, include=FALSE}
 data_tbl |> glimpse()
 
@@ -91,6 +93,7 @@ Zion & Zion ran an A/B test to determine if a new landing page would increase th
 
 The test was run for 30 days and the results are as follows:
 
+
 ## Test Results
 
 ::: {.panel-tabset}
@@ -116,24 +119,46 @@ density_B <- dbeta(x, post_B[1], post_B[2])
 # Create a data frame for plotting
 df <- data.frame(x, Group_A = density_A, Group_B = density_B)
 
-# Plotting
+# # Plotting
+# df |>
+#   ggplot(aes(x)) +
+#   geom_line(aes(y = Group_A, color = "Group A", color = "#2E465F"), linewidth = 0.8) +
+#   geom_line(aes(y = Group_B, color = "Group B"), linewidth = 0.8) +
+#   labs(
+#     title = NULL,
+#     x     = "Conversion Rate", y = "Density") +
+#   scale_colour_manual(
+#     "",
+#     breaks = c("Group A", "Group B"),
+#     values = c("Group A" = "#2E465F", "Group B" = "#D81B60")
+#   ) +
+#   xlim(min_x_lim, max_x_lim) +
+#   theme(
+#     legend.position = "bottom"
+#     )
+```
+
+```{r echo=FALSE, fig.width=9, fig.height=4.5, warning=FALSE, message=FALSE}
 df |>
   ggplot(aes(x)) +
-  geom_line(aes(y = Group_A, colour = "Group A"), linewidth = 0.8) +
-  geom_line(aes(y = Group_B, colour = "Group B"), linewidth = 0.8) +
+  # geom_line(aes(y = Group_A, color = "Group A"), linewidth = 0.8) +
+  # geom_line(aes(y = Group_B, color = "Group B"), linewidth = 0.8) +
+  geom_area(aes(y = Group_A, fill = "Group A"), alpha = 0.45) +  # Using geom_area for Group A
+  geom_area(aes(y = Group_B, fill = "Group B"), alpha = 0.45) +  # Using geom_area for Group B
+  scale_fill_manual(
+    values = c("Group A" = "#2E465F", "Group B" = "#D81B60"),
+    name   = "Groups:"
+  ) +
   labs(
     title = NULL,
-    x     = "Conversion Rate", y = "Density") +
-  scale_colour_manual(
-    "",
-    breaks = c("Group A", "Group B"),
-    values = c("Group A" = "#2E465F", "Group B" = "#D81B60")
+    x     = "Conversion Rate", 
+    y     = "Density"
   ) +
   xlim(min_x_lim, max_x_lim) +
-  theme(
-    legend.position = "bottom"
-    )
+  theme(legend.position = "bottom")
 ```
+
+
 
 ```{r, include=FALSE, warning=FALSE, message=FALSE}
 rate_A <- params$conversions_A / params$visitors_A
