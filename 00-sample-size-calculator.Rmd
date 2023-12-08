@@ -66,13 +66,16 @@ numericInput("WeeklyTraffic", "Weekly Traffic", min = 100, max = 50000,
 
 radioButtons("Test_type", "Test type:", c("Two-tailed" = "two.sided", "One-tailed" = "one.sided"), selected = "two.sided")
 
+actionButton(inputId = "apply", label = "Apply", icon = icon("play-circle-fill"), 
+             style = "color: #fff; background-color: #48718f; border-color: #48718f; font-family: roboto; font-size: 14px; font-weight: bold; line-height: 1.5; border-radius: 0.25rem; padding: 0.375rem 0.75rem; transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; cursor: pointer;  white-space: nowrap; vertical-align: middle; user-select: none; border: 1px solid transparent;")
+
 ```
 
 ## Column {data-height="100"}
 
 ```{r}
-renderPlot({
-    seq(input$WeeklyTraffic, input$WeeklyTraffic * 8, by = input$WeeklyTraffic) %>%
+data1 <- eventReactive(eventExpr = input$apply,  valueExpr = {
+  seq(input$WeeklyTraffic, input$WeeklyTraffic * 8, by = input$WeeklyTraffic) %>%
         map_df(~ power.prop.test(p1          = input$Baseline / 100,
                                  p2          = NULL, 
                                  n           = .x, 
@@ -82,7 +85,11 @@ renderPlot({
                    tidy()) %>%
         mutate(effect = p2 / p1 - 1,
                total  = n * 2,
-               n      = n) %>%
+               n      = n)
+}, ignoreNULL = FALSE)
+
+renderPlot({
+    data1() |> 
         ggplot(aes(n, effect)) + 
         geom_hline(yintercept = input$MDE / 100, linetype = 2, color = "gray50", alpha = 0.5, linewidth = 1) +
         geom_col(alpha = 0.7, fill = "#48718f") +
@@ -107,20 +114,40 @@ renderPlot({
 ### With your selected parameters, you can measure: {data-height="100"}
 
 ```{r}
-DT::renderDataTable({
-    seq(input$WeeklyTraffic, input$WeeklyTraffic * 8, by = input$WeeklyTraffic) %>%
-        map_df(~ power.prop.test(p1 = input$Baseline / 100,
+data <- eventReactive(eventExpr = input$apply, 
+                      valueExpr = {
+                        seq(input$WeeklyTraffic, input$WeeklyTraffic * 8, by = input$WeeklyTraffic) %>%
+                          map_df(~ power.prop.test(p1 = input$Baseline / 100,
                                  p2 = NULL, 
                                  n = .x, 
                                  power = input$Power / 100, 
                                  sig.level = input$SigLevel / 100,
                                  alternative = input$Test_type) %>%
-                   tidy()) %>%
-        mutate(effect = scales::percent(p2 / p1 - 1),
-               total  = scales::comma(n * 2),
-               n      = scales::comma(n)) %>% 
-        select(`A relative detectible MDE` = effect, 
-               `With a sample size in each group of` = n,
-               `And a total sample size of` = total)
+                                   tidy()) %>%
+                          mutate(effect = scales::percent(p2 / p1 - 1),
+                                 total  = scales::comma(n * 2),
+                                 n      = scales::comma(n)) %>% 
+                          select(`A relative detectible MDE` = effect, 
+                                 `With a sample size in each group of` = n,
+                                 `And a total sample size of` = total)
+                        },
+                      ignoreNULL = FALSE)
+
+DT::renderDataTable({
+  data()
+    # seq(input$WeeklyTraffic, input$WeeklyTraffic * 8, by = input$WeeklyTraffic) %>%
+    #     map_df(~ power.prop.test(p1 = input$Baseline / 100,
+    #                              p2 = NULL, 
+    #                              n = .x, 
+    #                              power = input$Power / 100, 
+    #                              sig.level = input$SigLevel / 100,
+    #                              alternative = input$Test_type) %>%
+    #                tidy()) %>%
+    #     mutate(effect = scales::percent(p2 / p1 - 1),
+    #            total  = scales::comma(n * 2),
+    #            n      = scales::comma(n)) %>% 
+    #     select(`A relative detectible MDE` = effect, 
+    #            `With a sample size in each group of` = n,
+    #            `And a total sample size of` = total)
 })
 ```
