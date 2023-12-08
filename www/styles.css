@@ -1,0 +1,13 @@
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: 500;
+  font-family: Roboto;
+}
+
+.chart-title {
+    border-bottom: 1px solid #BEBEBF;
+    font-size: 0.9375rem;
+    font-weight: 300;
+    padding: 7px 10px 4px;
+    font-family: Roboto;
+}
