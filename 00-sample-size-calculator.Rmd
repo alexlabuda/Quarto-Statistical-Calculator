@@ -1,0 +1,126 @@
+---
+title: "A/B Testing"
+runtime: shiny
+output: 
+  flexdashboard::flex_dashboard:
+    navbar:
+      - { title: "Zion & Zion", href: "https://www.zionandzion.com/" }
+    theme:
+      version: 4
+      bg: "white"
+      fg: "#262829" 
+      primary: "#48718f"
+      navbar-bg: "#3ADAC6"
+      base_font: 
+        google: Roboto
+      heading_font:
+        google: Roboto
+      code_font:
+        google: 
+          # arguments to sass::font_google() 
+          family: JetBrains Mono
+          local: false
+    orientation: columns
+    vertical_layout: fill
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(broom)
+library(showtext)
+library(DT)
+font_add_google("Roboto", "roboto")
+```
+
+## Column {.sidebar data-width="320"}
+
+#### Input your test parameters
+
+##### How to use:
+
+**Baseline conversion rate:** the weekly conversion rate of the control group.
+
+**Significance level:** the probability of rejecting the null hypothesis when it is true. In other words, it is the probability of a false positive.
+
+**Statistical power:** the probability of rejecting the null hypothesis when it is false. In other words, it is the probability of a true positive.
+
+**Weekly traffic:** the weekly traffic of the control group.
+
+```{r}
+numericInput("Baseline", "Baseline conversion rate (control) %", min = 1, max = 50, 
+             value = 5)
+
+numericInput("SigLevel", "Significance level", min = 1, max = 20, 
+            value = 5)
+
+numericInput("Power", "Statistical power", min = 1, max = 99, 
+             value = 80)
+
+# numericInput("MDE", "Minimum detectable threshold", min = 1, max = 50, 
+#              value = 20)
+
+# Weekly traffic
+numericInput("WeeklyTraffic", "Weekly Traffic", min = 100, max = 50000, 
+             value = 10000)
+
+radioButtons("Test_type", "Test type:", c("Two-tailed" = "two.sided", "One-tailed" = "one.sided"), selected = "two.sided")
+
+```
+
+## Column {data-height="100"}
+
+```{r}
+renderPlot({
+    seq(input$WeeklyTraffic, input$WeeklyTraffic * 8, by = input$WeeklyTraffic) %>%
+        map_df(~ power.prop.test(p1          = input$Baseline / 100,
+                                 p2          = NULL, 
+                                 n           = .x, 
+                                 power       = input$Power / 100, 
+                                 sig.level   = input$SigLevel / 100,
+                                 alternative = input$Test_type) %>%
+                   tidy()) %>%
+        mutate(effect = p2 / p1 - 1,
+               total  = n * 2,
+               n      = n) %>%
+        ggplot(aes(n, effect)) + 
+        geom_hline(yintercept = input$MDE / 100, linetype = 2, color = "gray50", alpha = 0.5, linewidth = 1) +
+        geom_col(alpha = 0.7, fill = "#48718f") +
+        theme_minimal(base_size = 18) +
+        scale_y_continuous(labels = scales::percent_format(),
+                           limits = c(0, NA)) +
+        scale_x_continuous(labels = scales::comma_format()) +
+        scale_color_gradient(high = "#0077CC", low = "#B8E0C5",
+                             labels = scales::comma_format()) +
+        labs(x = "Sample size", y = "Minimum Detectable Effect",
+             title = "What is the Minimum detectable effect by sample size?") +
+    theme(
+      panel.grid   = element_blank(),
+      plot.title   = element_text(family = "roboto", size = 17, face = "bold",
+                                  color  = "grey35"),
+      axis.title.y = element_text(family = "roboto", size = 14),
+      axis.title.x = element_text(family = "roboto", size = 14)
+    )
+})
+```
+
+### With your selected parameters, you can measure: {data-height="100"}
+
+```{r}
+DT::renderDataTable({
+    seq(input$WeeklyTraffic, input$WeeklyTraffic * 8, by = input$WeeklyTraffic) %>%
+        map_df(~ power.prop.test(p1 = input$Baseline / 100,
+                                 p2 = NULL, 
+                                 n = .x, 
+                                 power = input$Power / 100, 
+                                 sig.level = input$SigLevel / 100,
+                                 alternative = input$Test_type) %>%
+                   tidy()) %>%
+        mutate(effect = scales::percent(p2 / p1 - 1),
+               total  = scales::comma(n * 2),
+               n      = scales::comma(n)) %>% 
+        select(`A relative detectible MDE` = effect, 
+               `With a sample size in each group of` = n,
+               `And a total sample size of` = total)
+})
+```

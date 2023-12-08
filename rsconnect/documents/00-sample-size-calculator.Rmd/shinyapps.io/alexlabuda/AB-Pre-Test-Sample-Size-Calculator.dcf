@@ -1,0 +1,12 @@
+name: AB-Pre-Test-Sample-Size-Calculator
+title: AB-Pre-Test-Sample-Size-Calculator
+username: alexlabuda
+account: alexlabuda
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 10747188
+bundleId: 8022976
+url: https://alexlabuda.shinyapps.io/AB-Pre-Test-Sample-Size-Calculator/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
