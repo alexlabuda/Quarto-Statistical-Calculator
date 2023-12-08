@@ -5,6 +5,7 @@ output:
   flexdashboard::flex_dashboard:
     navbar:
       - { title: "Zion & Zion", href: "https://www.zionandzion.com/" }
+    css: www/styles.css
     theme:
       version: 4
       bg: "white"
@@ -22,6 +23,7 @@ output:
           local: false
     orientation: columns
     vertical_layout: fill
+  runtime: shiny
 ---
 
 ```{r setup, include=FALSE}
@@ -92,7 +94,7 @@ renderPlot({
     data1() |> 
         ggplot(aes(n, effect)) + 
         geom_hline(yintercept = input$MDE / 100, linetype = 2, color = "gray50", alpha = 0.5, linewidth = 1) +
-        geom_col(alpha = 0.7, fill = "#48718f") +
+        geom_col(alpha = 0.25, fill = "#48718f", color = "grey35", linewidth = 0.2) +
         theme_minimal(base_size = 18) +
         scale_y_continuous(labels = scales::percent_format(),
                            limits = c(0, NA)) +
@@ -111,7 +113,7 @@ renderPlot({
 })
 ```
 
-### With your selected parameters, you can measure: {data-height="100"}
+### **With your selected parameters, you can measure:** {data-height="100"}
 
 ```{r}
 data <- eventReactive(eventExpr = input$apply, 
@@ -149,5 +151,14 @@ DT::renderDataTable({
     #     select(`A relative detectible MDE` = effect, 
     #            `With a sample size in each group of` = n,
     #            `And a total sample size of` = total)
-})
+}, selection = "single", class = "display nowrap compact", 
+   filter = "none", rownames = TRUE, 
+   options = list(
+     dom = "t",
+     paging = FALSE,
+     ordering = FALSE,
+     searching = FALSE,
+     info = FALSE,
+     columnDefs = list(list(className = "dt-center", targets = "_all"))
+   ))
 ```
