@@ -49,18 +49,17 @@ results
 
 
 
-
 ## 2nd result
 
 library(pwr)
 
 # Inputs from the user
-weekly_traffic <- 20000
-weekly_conversions <- 200
+weekly_traffic           <- 20000
+weekly_conversions       <- 200
 baseline_conversion_rate <- 0.01
-number_of_variants <- 2
-confidence_level <- 0.95
-statistical_power <- 0.80
+number_of_variants       <- 2
+confidence_level         <- 0.95
+statistical_power        <- 0.80
 
 # Function to calculate the effect size needed for power calculation
 # This function will be used within the sample size calculation to find the MDE
@@ -94,4 +93,90 @@ results <- lapply(1:6, calculate_sample_size_and_mde)
 
 # Output results
 results
+
+
+# Parameters
+alpha = 0.05     # Significance level (for a two-sided test)
+power = 0.80     # Power
+sigma = 2.5       # Standard deviation (example value)
+n     = 10000      # Sample size per group
+
+# Calculate z-scores
+z_alpha = qnorm(1 - alpha / 2)  # Z-score for alpha
+z_beta = qnorm(power)          # Z-score for beta
+
+# Calculate MDE
+mde = (z_alpha + z_beta) * sqrt(2 * sigma^2 / n)
+
+# Output MDE
+print(mde)
+
+
+
+ab_test_calculator <- function(weekly_traffic, weekly_conversions, num_variants, baseline_conv_rate, confidence_level, statistical_power, num_weeks) {
+  results <- data.frame(Week = integer(), MDE = numeric(), VisitorsPerVariant = numeric())
+  
+  for (week in 1:num_weeks) {
+    # Calculate cumulative visitors per variant
+    visitors_per_variant = (weekly_traffic * week) / num_variants
+    
+    # Use the pwr package or similar to calculate MDE
+    # This is a simplified example, and you'll need to adjust it based on your specific formula
+    effect_size <- pwr.2p.test(h = baseline_conv_rate, n = visitors_per_variant, sig.level = confidence_level, power = statistical_power)$h
+    
+    results <- rbind(results, data.frame(Week = week, MDE = effect_size, VisitorsPerVariant = visitors_per_variant))
+  }
+  
+  return(results)
+}
+
+
+ab_test_calculator <- function(weekly_traffic, weekly_conversions, num_variants, baseline_conv_rate, confidence_level, statistical_power, num_weeks) {
+  results <- data.frame(Week = integer(), MDE = numeric(), VisitorsPerVariant = numeric())
+  
+  for (week in 1:num_weeks) {
+    visitors_per_variant = (weekly_traffic * week) / num_variants
+    
+    # Calculate MDE, setting 'h' as NULL
+    mde_result <- pwr.2p.test(h = NULL, n = visitors_per_variant, sig.level = confidence_level, power = statistical_power)
+    mde <- mde_result$h
+    
+    results <- rbind(results, data.frame(Week = week, MDE = mde, VisitorsPerVariant = visitors_per_variant))
+  }
+  
+  return(results)
+}
+
+ab_test_calculator(
+  weekly_traffic = 20000, 
+  weekly_conversions = 500, 
+  num_variants = 2, 
+  baseline_conv_rate = 0.025, 
+  confidence_level = 0.95, 
+  statistical_power = 0.8, 
+  num_weeks = 6
+  )
+
+
+# Set parameters
+baseline_conversion_rate <- 0.05
+sample_size_per_group <- 20000
+significance_level <- 0.05
+power <- 0.80
+
+# Calculate effect size
+effect_size <- pwr.2p.test(h           = NULL, 
+                           n           = sample_size_per_group, 
+                           sig.level   = significance_level, 
+                           power       = power, 
+                           alternative = "greater")$h
+
+# Convert effect size to MDE
+mde <- baseline_conversion_rate + effect_size
+
+# Print MDE
+mde * 100
+
+
+
 
