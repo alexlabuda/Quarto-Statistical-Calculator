@@ -4,6 +4,10 @@
   font-family: Roboto;
 }
 
+#section-column {
+  padding-left: 500;
+}
+
 .chart-title {
     border-bottom: 1px solid #BEBEBF;
     font-size: 0.9375rem;

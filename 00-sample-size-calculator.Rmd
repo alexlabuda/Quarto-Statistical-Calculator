@@ -1,5 +1,5 @@
 ---
-title: "A/B Testing"
+title: "A/B Pre-Test Sample Size Calculator"
 runtime: shiny
 output: 
   flexdashboard::flex_dashboard:
@@ -35,28 +35,24 @@ library(DT)
 font_add_google("Roboto", "roboto")
 ```
 
-## Column {.sidebar data-width="320"}
+## Column {.sidebar data-width="500"}
 
-#### Input your test parameters
+**Baseline conversion rate:** The current conversion rate of your control group before any changes or tests are applied. It as a starting point or the 'normal' rate at which visitors complete a desired action.
 
-##### How to use:
+**Significance level (α):** Threshold to determine the statistical significance of an outcome. It's the risk you are willing to take of a false positive error, or concluding there is an effect or difference when there actually is not. Commonly set at 5%, meaning you would accept a 5% chance of incorrectly rejecting the null hypothesis (assumption that there is no difference or effect).
 
-**Baseline conversion rate:** the weekly conversion rate of the control group.
+**Statistical power (1 - β):** This refers to the likelihood that your test will correctly detect a true effect or difference when there is one. Generally, a power of 80% or 0.8 is considered adequate.
 
-**Significance level:** the probability of rejecting the null hypothesis when it is true. In other words, it is the probability of a false positive.
-
-**Statistical power:** the probability of rejecting the null hypothesis when it is false. In other words, it is the probability of a true positive.
-
-**Weekly traffic:** the weekly traffic of the control group.
+**Weekly traffic:** This is the number of people who visit your website or use your service each week.
 
 ```{r}
-numericInput("Baseline", "Baseline conversion rate (control) %", min = 1, max = 50, 
+numericInput("Baseline", "Baseline conversion rate %", min = 1, max = 50, 
              value = 5)
 
-numericInput("SigLevel", "Significance level", min = 1, max = 20, 
+numericInput("SigLevel", "Significance level (α)", min = 1, max = 20, 
             value = 5)
 
-numericInput("Power", "Statistical power", min = 1, max = 99, 
+numericInput("Power", "Statistical power (1 - β)", min = 1, max = 99, 
              value = 80)
 
 # numericInput("MDE", "Minimum detectable threshold", min = 1, max = 50, 
@@ -77,7 +73,7 @@ actionButton(inputId = "apply", label = "Apply", icon = icon("play-circle-fill")
 
 ```{r}
 data1 <- eventReactive(eventExpr = input$apply,  valueExpr = {
-  seq(input$WeeklyTraffic, input$WeeklyTraffic * 8, by = input$WeeklyTraffic) %>%
+  seq(input$WeeklyTraffic / 2, input$WeeklyTraffic / 2 * 8, by = input$WeeklyTraffic / 2) %>%
         map_df(~ power.prop.test(p1          = input$Baseline / 100,
                                  p2          = NULL, 
                                  n           = .x, 
@@ -118,7 +114,7 @@ renderPlot({
 ```{r}
 data <- eventReactive(eventExpr = input$apply, 
                       valueExpr = {
-                        seq(input$WeeklyTraffic, input$WeeklyTraffic * 8, by = input$WeeklyTraffic) %>%
+                        seq(input$WeeklyTraffic / 2, input$WeeklyTraffic / 2 * 8, by = input$WeeklyTraffic / 2) %>%
                           map_df(~ power.prop.test(p1 = input$Baseline / 100,
                                  p2 = NULL, 
                                  n = .x, 
