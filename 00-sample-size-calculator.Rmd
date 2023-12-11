@@ -32,6 +32,10 @@ library(tidyverse)
 library(broom)
 library(showtext)
 library(DT)
+library(BayesFactor)
+
+# theme_set(theme_minimal())
+
 font_add_google("Roboto", "roboto")
 ```
 
@@ -149,5 +153,120 @@ DT::renderDataTable({
 ```
 
 
-Page 2
+Statistical Test Calculator (Bayesian)
 =====================================
+
+## Column {.sidebar data-width="350"}
+
+**[PLACEHOLDER FOR DESCRIPTION]**
+
+```{r}
+numericInput("sample_size_control", "Sample Size (Control)", min = 10, max = 100000, 
+             value = 10000)
+
+numericInput("sample_size_test", "Sample Size (Test)", min = 1, max = 20, 
+            value = 5)
+
+numericInput("success_control", "Successes (Control)", min = 1, max = 50000, 
+             value = 1500)
+
+numericInput("success_test", "Successes (Test)", min = 1, max = 50000, 
+             value = 1500)
+
+
+actionButton(inputId = "apply_2", label = "Apply", icon = icon("play-circle-fill"), 
+             style = "color: #fff; background-color: #48718f; border-color: #48718f; font-family: roboto; font-size: 14px; font-weight: bold; line-height: 1.5; border-radius: 0.25rem; padding: 0.375rem 0.75rem; transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; cursor: pointer;  white-space: nowrap; vertical-align: middle; user-select: none; border: 1px solid transparent;")
+
+```
+
+
+```{r}
+set.seed(123)
+
+# Using a uniform prior Beta(1,1)
+prior <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
+  c(1, 1)
+}, ignoreNULL = FALSE)
+
+
+post_A <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
+  c(input$success_control + prior[1], input$sample_size_control - input$success_control + prior[2])
+}, ignoreNULL = FALSE)
+
+post_B <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
+  c(input$success_test + prior[1], input$sample_size_test - input$success_test + prior[2])
+}, ignoreNULL = FALSE)
+
+# Simulation
+sim_A <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
+  rbeta(10000, post_A[1], post_A[2])
+}, ignoreNULL = FALSE)
+
+sim_B <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
+  rbeta(10000, post_B[1], post_B[2])
+}, ignoreNULL = FALSE)
+
+
+prob_B_better_than_A <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
+  mean(sim_B > sim_A)
+}, ignoreNULL = FALSE)
+
+```
+
+
+```{r}
+max_x_lim <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
+  max(max(sim_A), max(sim_B))
+}, ignoreNULL = FALSE)
+
+min_x_lim <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
+  min(min(sim_A), min(sim_B))
+}, ignoreNULL = FALSE)
+
+
+# Create a sequence of conversion rates
+x <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
+  seq(0, 1, length.out = 1000)
+}, ignoreNULL = FALSE)
+
+
+# Calculate densities
+density_A <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
+  dbeta(x(), post_A[1], post_A[2])
+}, ignoreNULL = FALSE)
+
+density_B <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
+  dbeta(x(), post_B[1], post_B[2])
+}, ignoreNULL = FALSE)
+
+
+```
+
+## Column {data-height="100"}
+
+```{r}
+# # Create a data frame for plotting
+# df <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
+#   data.frame(x(), Group_A = density_A, Group_B = density_B)
+# }, ignoreNULL = FALSE)
+# 
+# renderPlot({
+#   df() |>
+#     ggplot(aes(x)) +
+#     # geom_line(aes(y = Group_A, color = "Group A"), linewidth = 0.8) +
+#     # geom_line(aes(y = Group_B, color = "Group B"), linewidth = 0.8) +
+#     geom_area(aes(y = Group_A, fill = "Group A"), alpha = 0.45) +  # Using geom_area for Group A
+#     geom_area(aes(y = Group_B, fill = "Group B"), alpha = 0.45) +  # Using geom_area for Group B
+#     scale_fill_manual(values = c("Group A" = "#2E465F", "Group B" = "#D81B60"),
+#                       name   = "Groups:") +
+#     labs(title = NULL,
+#          x     = "Conversion Rate",
+#          y     = "Density") +
+#     xlim(min_x_lim, max_x_lim) +
+#     theme(legend.position = "bottom")
+# })
+```
+
+
+
+
