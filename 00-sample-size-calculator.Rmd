@@ -1,5 +1,5 @@
 ---
-title: "A/B Pre-Test Sample Size Calculator"
+title: "A/B Testing Calculators"
 runtime: shiny
 output: 
   flexdashboard::flex_dashboard:
@@ -34,6 +34,9 @@ library(showtext)
 library(DT)
 font_add_google("Roboto", "roboto")
 ```
+
+Pre-test Sample Size
+=====================================
 
 ## Column {.sidebar data-width="500"}
 
@@ -133,20 +136,6 @@ data <- eventReactive(eventExpr = input$apply,
 
 DT::renderDataTable({
   data()
-    # seq(input$WeeklyTraffic, input$WeeklyTraffic * 8, by = input$WeeklyTraffic) %>%
-    #     map_df(~ power.prop.test(p1 = input$Baseline / 100,
-    #                              p2 = NULL, 
-    #                              n = .x, 
-    #                              power = input$Power / 100, 
-    #                              sig.level = input$SigLevel / 100,
-    #                              alternative = input$Test_type) %>%
-    #                tidy()) %>%
-    #     mutate(effect = scales::percent(p2 / p1 - 1),
-    #            total  = scales::comma(n * 2),
-    #            n      = scales::comma(n)) %>% 
-    #     select(`A relative detectible MDE` = effect, 
-    #            `With a sample size in each group of` = n,
-    #            `And a total sample size of` = total)
 }, selection = "single", class = "display nowrap compact", 
    filter = "none", rownames = TRUE, 
    options = list(
@@ -158,3 +147,7 @@ DT::renderDataTable({
      columnDefs = list(list(className = "dt-center", targets = "_all"))
    ))
 ```
+
+
+Page 2
+=====================================
