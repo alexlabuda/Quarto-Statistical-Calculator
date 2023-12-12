@@ -21,7 +21,7 @@ output:
           # arguments to sass::font_google() 
           family: JetBrains Mono
           local: false
-    orientation: columns
+    orientation: rows
     vertical_layout: fill
   runtime: shiny
 ---
@@ -43,7 +43,7 @@ font_add_google("Roboto", "roboto")
 Pre-test Sample Size
 =======================================================================
 
-Sidebar {.sidebar data-width="520"}
+Sidebar {.sidebar data-width="500"}
 -----------------------------------------------------------------------
 
 **Weekly traffic:** This is the number of people who visit your website or use your service each week.
@@ -85,7 +85,7 @@ actionButton(inputId = "apply", label = "Apply", icon = icon("play-circle-fill")
 
 ```{r}
 data1 <- eventReactive(eventExpr = input$apply,  valueExpr = {
-  seq(input$WeeklyTraffic / 2, input$WeeklyTraffic / 2 * 8, by = input$WeeklyTraffic / 2) %>%
+  seq(input$WeeklyTraffic / 2, input$WeeklyTraffic / 2 * 13, by = input$WeeklyTraffic / 2) %>%
         map_df(~ power.prop.test(p1          = input$Baseline / 100,
                                  p2          = NULL, 
                                  n           = .x, 
@@ -100,7 +100,7 @@ data1 <- eventReactive(eventExpr = input$apply,  valueExpr = {
 
 data <- eventReactive(eventExpr = input$apply, 
                       valueExpr = {
-                        seq(input$WeeklyTraffic / 2, input$WeeklyTraffic / 2 * 8, by = input$WeeklyTraffic / 2) %>%
+                        seq(input$WeeklyTraffic / 2, input$WeeklyTraffic / 2 * 13, by = input$WeeklyTraffic / 2) %>%
                           map_df(~ power.prop.test(p1 = input$Baseline / 100,
                                  p2 = NULL, 
                                  n = .x, 
@@ -117,13 +117,49 @@ data <- eventReactive(eventExpr = input$apply,
                       ignoreNULL = FALSE)
 
 # Select MDE closest to input
-mde_effect_selection <- eventReactive(eventExpr = input$apply, 
-                                       valueExpr = {
-                                         data() |> 
-                                           filter(effect <= input$MDE) |> 
-                                           slice_max(effect)
-                                       },
-                                       ignoreNULL = FALSE)
+# mde_effect_selection <- eventReactive(eventExpr = input$apply, 
+#                                        valueExpr = {
+#                                          data() |> 
+#                                            filter(effect <= input$MDE) |> 
+#                                            slice_max(effect)
+#                                        },
+#                                        ignoreNULL = FALSE)
+
+mde_effect_selection <- eventReactive(
+  eventExpr = input$apply,
+  valueExpr = {
+    # Ensure the data is available and not empty
+    if (is.null(data()) || nrow(data()) == 0) {
+      return(NULL)
+    }
+    
+    # Convert effect to numeric for comparison
+    data_numeric_effect <- data() %>%
+      mutate(effect_numeric = as.numeric(sub("%", "", effect)))
+
+    min_effect <- min(data_numeric_effect$effect_numeric, na.rm = TRUE)
+    
+    if (input$MDE <= min_effect) {
+      # Use slice_min if input$MDE is less than the smallest effect
+      result <- data_numeric_effect %>%
+        filter(effect_numeric <= min_effect) %>%
+        slice_min(order_by = effect_numeric, with_ties = FALSE)
+    } else {
+      # Filter data where effect is less than or equal to input$MDE
+      filtered_data <- data_numeric_effect %>%
+        filter(effect_numeric <= input$MDE)
+      
+      # Use slice_max on the filtered data
+      result <- filtered_data %>%
+        slice_max(order_by = effect_numeric, with_ties = FALSE)
+    }
+    
+    return(result)
+  },
+  ignoreNULL = FALSE
+)
+
+
 
 ```
 
@@ -131,7 +167,7 @@ mde_effect_selection <- eventReactive(eventExpr = input$apply,
 Row
 -----------------------------------------------------------------------
 
-### In order the achieve an MDE of at least {.value-box}
+### To achieve an MDE of {.value-box}
 
 ```{r}
 renderValueBox({
@@ -139,7 +175,7 @@ renderValueBox({
 })
 ```
 
-### Which will take you {.value-box}
+### The test will take {.value-box}
 
 ```{r}
 renderValueBox({
@@ -173,8 +209,8 @@ Row
 renderPlot({
     data1() |> 
         ggplot(aes(n, effect)) + 
-        geom_hline(yintercept = input$MDE / 100, linetype = 2, color = "gray50", alpha = 0.5, linewidth = 1) +
-        geom_col(alpha = 0.25, fill = "#48718f", color = "grey35", linewidth = 0.2) +
+        geom_hline(yintercept = input$MDE / 100, linetype = 2, color = "#FF0266", alpha = 0.5, linewidth = 0.8) +
+        geom_col(alpha = 0.45, fill = "#48718f") +
         theme_minimal(base_size = 18) +
         scale_y_continuous(labels = scales::percent_format(),
                            limits = c(0, NA)) +
@@ -214,147 +250,147 @@ DT::renderDataTable({
    ))
 ```
 
-Statistical Test Calculator (Bayesian)
-=======================================================================
+<!-- Statistical Test Calculator (Bayesian) -->
+<!-- ======================================================================= -->
 
-Sidebar {.sidebar data-width="500"}
------------------------------------------------------------------------
+<!-- Sidebar {.sidebar data-width="500"} -->
+<!-- ----------------------------------------------------------------------- -->
 
-**Setting Sample Sizes:**
+<!-- **Setting Sample Sizes:** -->
 
-Control Group: Locate the input labeled "Sample Size (Control)" and enter the number representing your control group's sample size.
+<!-- Control Group: Locate the input labeled "Sample Size (Control)" and enter the number representing your control group's sample size. -->
 
-Test Group: Similarly, for the test group, use the "Sample Size (Test)" input to set your sample size.
+<!-- Test Group: Similarly, for the test group, use the "Sample Size (Test)" input to set your sample size. -->
 
-**Entering Success Counts:**
+<!-- **Entering Success Counts:** -->
 
-Control Group: Use the "Successes (Control)" field to input the number of successful outcomes in your control group.
+<!-- Control Group: Use the "Successes (Control)" field to input the number of successful outcomes in your control group. -->
 
-Test Group: For the test group, the "Successes (Test)" input works the same way.
+<!-- Test Group: For the test group, the "Successes (Test)" input works the same way. -->
 
-**Applying the Inputs:** After you have entered the sample sizes and success counts for both groups, the app will use these inputs for Bayesian statistical analysis.
+<!-- **Applying the Inputs:** After you have entered the sample sizes and success counts for both groups, the app will use these inputs for Bayesian statistical analysis. -->
 
-```{r}
-numericInput("sample_size_control", "Sample Size (Control)", min = 10, max = 100000, 
-             value = 10000)
+<!-- ```{r} -->
+<!-- numericInput("sample_size_control", "Sample Size (Control)", min = 10, max = 100000,  -->
+<!--              value = 10000) -->
 
-numericInput("sample_size_test", "Sample Size (Test)", min = 1, max = 100000, 
-            value = 9000)
+<!-- numericInput("sample_size_test", "Sample Size (Test)", min = 1, max = 100000,  -->
+<!--             value = 9000) -->
 
-numericInput("success_control", "Successes (Control)", min = 1, max = 50000, 
-             value = 1500)
+<!-- numericInput("success_control", "Successes (Control)", min = 1, max = 50000,  -->
+<!--              value = 1500) -->
 
-numericInput("success_test", "Successes (Test)", min = 1, max = 50000, 
-             value = 1450)
-
-
-# actionButton(inputId = "apply_2", label = "Apply", icon = icon("play-circle-fill"), 
-#              style = "color: #fff; background-color: #48718f; border-color: #48718f; font-family: roboto; font-size: 14px; font-weight: bold; line-height: 1.5; border-radius: 0.25rem; padding: 0.375rem 0.75rem; transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; cursor: pointer;  white-space: nowrap; vertical-align: middle; user-select: none; border: 1px solid transparent;")
-
-```
-
-```{r}
-set.seed(123)
-
-# Using a uniform prior Beta(1,1)
-prior <- c(1, 1)
+<!-- numericInput("success_test", "Successes (Test)", min = 1, max = 50000,  -->
+<!--              value = 1450) -->
 
 
-# Define the reactive expressions
-post_A <- reactive({
-  c(
-    input$success_control + prior[1],
-    input$sample_size_control - input$success_control + prior[2]
-  )
-})
+<!-- # actionButton(inputId = "apply_2", label = "Apply", icon = icon("play-circle-fill"),  -->
+<!-- #              style = "color: #fff; background-color: #48718f; border-color: #48718f; font-family: roboto; font-size: 14px; font-weight: bold; line-height: 1.5; border-radius: 0.25rem; padding: 0.375rem 0.75rem; transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; cursor: pointer;  white-space: nowrap; vertical-align: middle; user-select: none; border: 1px solid transparent;") -->
 
-post_B <- reactive({
-  c(input$success_test + prior[1],
-    input$sample_size_test - input$success_test + prior[2])
-})
+<!-- ``` -->
 
-sim_A <- reactive({
-  rbeta(10000, post_A()[1], post_A()[2])
-})
+<!-- ```{r} -->
+<!-- set.seed(123) -->
 
-sim_B <- reactive({
-  rbeta(10000, post_B()[1], post_B()[2])
-})
-
-prob_B_better_than_A <- reactive({
-  mean(sim_B() > sim_A())
-})
+<!-- # Using a uniform prior Beta(1,1) -->
+<!-- prior <- c(1, 1) -->
 
 
-# renderValueBox({
-#         valueBox(
-#             prob_B_better_than_A(),
-#             icon = "fa-arrow-up"
-#         )
-#     })
-```
+<!-- # Define the reactive expressions -->
+<!-- post_A <- reactive({ -->
+<!--   c( -->
+<!--     input$success_control + prior[1], -->
+<!--     input$sample_size_control - input$success_control + prior[2] -->
+<!--   ) -->
+<!-- }) -->
 
-```{r}
-# Assuming you are within a Shiny server function
+<!-- post_B <- reactive({ -->
+<!--   c(input$success_test + prior[1], -->
+<!--     input$sample_size_test - input$success_test + prior[2]) -->
+<!-- }) -->
 
-# Define these as reactive expressions
-max_x_lim <- reactive({
-    max(max(sim_A()), max(sim_B()))
-})
+<!-- sim_A <- reactive({ -->
+<!--   rbeta(10000, post_A()[1], post_A()[2]) -->
+<!-- }) -->
 
-min_x_lim <- reactive({
-    min(min(sim_A()), min(sim_B()))
-})
+<!-- sim_B <- reactive({ -->
+<!--   rbeta(10000, post_B()[1], post_B()[2]) -->
+<!-- }) -->
 
-# Create a sequence of conversion rates
-x <- seq(0, 1, length.out = 1000)
-
-# Calculate densities as reactive expressions
-density_A <- reactive({
-    dbeta(x, post_A()[1], post_A()[2])
-})
-
-density_B <- reactive({
-    dbeta(x, post_B()[1], post_B()[2])
-})
+<!-- prob_B_better_than_A <- reactive({ -->
+<!--   mean(sim_B() > sim_A()) -->
+<!-- }) -->
 
 
-```
+<!-- # renderValueBox({ -->
+<!-- #         valueBox( -->
+<!-- #             prob_B_better_than_A(), -->
+<!-- #             icon = "fa-arrow-up" -->
+<!-- #         ) -->
+<!-- #     }) -->
+<!-- ``` -->
 
-```{r}
-# Define df as a reactive expression
-df <- reactive({
-    data.frame(x = x, 
-               Group_A = density_A(),  # Ensure to call reactive expressions with ()
-               Group_B = density_B())  # Ensure to call reactive expressions with ()
-})
+<!-- ```{r} -->
+<!-- # Assuming you are within a Shiny server function -->
 
-```
+<!-- # Define these as reactive expressions -->
+<!-- max_x_lim <- reactive({ -->
+<!--     max(max(sim_A()), max(sim_B())) -->
+<!-- }) -->
 
-Row
------------------------------------------------------------------------
+<!-- min_x_lim <- reactive({ -->
+<!--     min(min(sim_A()), min(sim_B())) -->
+<!-- }) -->
 
-### Histograms {data-width="500"}
+<!-- # Create a sequence of conversion rates -->
+<!-- x <- seq(0, 1, length.out = 1000) -->
 
-```{r}
-# Assuming this is inside a renderPlot({ ... }) in your Shiny server function
+<!-- # Calculate densities as reactive expressions -->
+<!-- density_A <- reactive({ -->
+<!--     dbeta(x, post_A()[1], post_A()[2]) -->
+<!-- }) -->
 
-renderPlot({
-  df_plot <- df()  # Get the data frame from the reactive expression
-  
-  ggplot(df_plot, aes(x = x)) +
-    geom_area(aes(y = Group_A, fill = "Group A"), alpha = 0.45) +  # Using geom_area for Group A
-    geom_area(aes(y = Group_B, fill = "Group B"), alpha = 0.45) +  # Using geom_area for Group B
-    scale_fill_manual(values = c("Group A" = "#2E465F", "Group B" = "#D81B60"),
-                      name   = "Groups:") +
-    labs(title = NULL,
-         x     = "Conversion Rate",
-         y     = "Density") +
-    theme_minimal() +
-    theme(panel.grid   = element_blank()) +
-    theme(legend.position = "bottom") +
-    scale_x_continuous(labels = scales::percent_format(),
-                       limits = c(min_x_lim(), max_x_lim()))
-})
+<!-- density_B <- reactive({ -->
+<!--     dbeta(x, post_B()[1], post_B()[2]) -->
+<!-- }) -->
 
-```
+
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- # Define df as a reactive expression -->
+<!-- df <- reactive({ -->
+<!--     data.frame(x = x,  -->
+<!--                Group_A = density_A(),  # Ensure to call reactive expressions with () -->
+<!--                Group_B = density_B())  # Ensure to call reactive expressions with () -->
+<!-- }) -->
+
+<!-- ``` -->
+
+<!-- Row -->
+<!-- ----------------------------------------------------------------------- -->
+
+<!-- ### Histograms {data-width="500"} -->
+
+<!-- ```{r} -->
+<!-- # Assuming this is inside a renderPlot({ ... }) in your Shiny server function -->
+
+<!-- renderPlot({ -->
+<!--   df_plot <- df()  # Get the data frame from the reactive expression -->
+
+<!--   ggplot(df_plot, aes(x = x)) + -->
+<!--     geom_area(aes(y = Group_A, fill = "Group A"), alpha = 0.45) +  # Using geom_area for Group A -->
+<!--     geom_area(aes(y = Group_B, fill = "Group B"), alpha = 0.45) +  # Using geom_area for Group B -->
+<!--     scale_fill_manual(values = c("Group A" = "#2E465F", "Group B" = "#D81B60"), -->
+<!--                       name   = "Groups:") + -->
+<!--     labs(title = NULL, -->
+<!--          x     = "Conversion Rate", -->
+<!--          y     = "Density") + -->
+<!--     theme_minimal() + -->
+<!--     theme(panel.grid   = element_blank()) + -->
+<!--     theme(legend.position = "bottom") + -->
+<!--     scale_x_continuous(labels = scales::percent_format(), -->
+<!--                        limits = c(min_x_lim(), max_x_lim())) -->
+<!-- }) -->
+
+<!-- ``` -->
