@@ -18,7 +18,6 @@ output:
         google: Roboto
       code_font:
         google: 
-          # arguments to sass::font_google() 
           family: JetBrains Mono
           local: false
     orientation: rows
@@ -102,10 +101,10 @@ data <- eventReactive(eventExpr = input$apply,
                       valueExpr = {
                         seq(input$WeeklyTraffic / 2, input$WeeklyTraffic / 2 * 13, by = input$WeeklyTraffic / 2) %>%
                           map_df(~ power.prop.test(p1 = input$Baseline / 100,
-                                 p2 = NULL, 
-                                 n = .x, 
-                                 power = input$Power / 100, 
-                                 sig.level = input$SigLevel / 100,
+                                 p2          = NULL, 
+                                 n           = .x, 
+                                 power       = input$Power / 100, 
+                                 sig.level   = input$SigLevel / 100,
                                  alternative = input$Test_type) %>%
                                    tidy()) %>%
                           mutate(effect = scales::percent(p2 / p1 - 1),
