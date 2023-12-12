@@ -39,8 +39,7 @@ library(BayesFactor)
 font_add_google("Roboto", "roboto")
 ```
 
-Pre-test Sample Size
-=====================================
+# Pre-test Sample Size
 
 ## Column {.sidebar data-width="500"}
 
@@ -53,6 +52,7 @@ Pre-test Sample Size
 **Weekly traffic:** This is the number of people who visit your website or use your service each week.
 
 ```{r}
+
 numericInput("Baseline", "Baseline conversion rate %", min = 1, max = 50, 
              value = 5)
 
@@ -108,10 +108,10 @@ renderPlot({
              title = "What is the Minimum detectable effect by sample size?") +
     theme(
       panel.grid   = element_blank(),
-      plot.title   = element_text(family = "roboto", size = 17, face = "bold",
+      plot.title   = element_text(family = "roboto", size = 18, face = "bold",
                                   color  = "grey35"),
-      axis.title.y = element_text(family = "roboto", size = 14),
-      axis.title.x = element_text(family = "roboto", size = 14)
+      axis.title.y = element_text(family = "roboto", size = 16),
+      axis.title.x = element_text(family = "roboto", size = 16)
     )
 })
 ```
@@ -152,121 +152,142 @@ DT::renderDataTable({
    ))
 ```
 
+# Statistical Test Calculator (Bayesian)
 
-Statistical Test Calculator (Bayesian)
-=====================================
+## Column {.sidebar data-width="500"}
 
-## Column {.sidebar data-width="350"}
+**Setting Sample Sizes:**
 
-**[PLACEHOLDER FOR DESCRIPTION]**
+Control Group: Locate the input labeled "Sample Size (Control)" and enter the number representing your control group's sample size.
+
+Test Group: Similarly, for the test group, use the "Sample Size (Test)" input to set your sample size.
+
+**Entering Success Counts:**
+
+Control Group: Use the "Successes (Control)" field to input the number of successful outcomes in your control group.
+
+Test Group: For the test group, the "Successes (Test)" input works the same way.
+
+**Applying the Inputs:** After you have entered the sample sizes and success counts for both groups, the app will use these inputs for Bayesian statistical analysis.
 
 ```{r}
 numericInput("sample_size_control", "Sample Size (Control)", min = 10, max = 100000, 
              value = 10000)
 
-numericInput("sample_size_test", "Sample Size (Test)", min = 1, max = 20, 
-            value = 5)
+numericInput("sample_size_test", "Sample Size (Test)", min = 1, max = 100000, 
+            value = 9000)
 
 numericInput("success_control", "Successes (Control)", min = 1, max = 50000, 
              value = 1500)
 
 numericInput("success_test", "Successes (Test)", min = 1, max = 50000, 
-             value = 1500)
+             value = 1450)
 
 
-actionButton(inputId = "apply_2", label = "Apply", icon = icon("play-circle-fill"), 
-             style = "color: #fff; background-color: #48718f; border-color: #48718f; font-family: roboto; font-size: 14px; font-weight: bold; line-height: 1.5; border-radius: 0.25rem; padding: 0.375rem 0.75rem; transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; cursor: pointer;  white-space: nowrap; vertical-align: middle; user-select: none; border: 1px solid transparent;")
+# actionButton(inputId = "apply_2", label = "Apply", icon = icon("play-circle-fill"), 
+#              style = "color: #fff; background-color: #48718f; border-color: #48718f; font-family: roboto; font-size: 14px; font-weight: bold; line-height: 1.5; border-radius: 0.25rem; padding: 0.375rem 0.75rem; transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; cursor: pointer;  white-space: nowrap; vertical-align: middle; user-select: none; border: 1px solid transparent;")
 
 ```
-
 
 ```{r}
 set.seed(123)
 
 # Using a uniform prior Beta(1,1)
-prior <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
-  c(1, 1)
-}, ignoreNULL = FALSE)
+prior <- c(1, 1)
 
 
-post_A <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
-  c(input$success_control + prior[1], input$sample_size_control - input$success_control + prior[2])
-}, ignoreNULL = FALSE)
+# Define the reactive expressions
+post_A <- reactive({
+  c(
+    input$success_control + prior[1],
+    input$sample_size_control - input$success_control + prior[2]
+  )
+})
 
-post_B <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
-  c(input$success_test + prior[1], input$sample_size_test - input$success_test + prior[2])
-}, ignoreNULL = FALSE)
+post_B <- reactive({
+  c(input$success_test + prior[1],
+    input$sample_size_test - input$success_test + prior[2])
+})
 
-# Simulation
-sim_A <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
-  rbeta(10000, post_A[1], post_A[2])
-}, ignoreNULL = FALSE)
+sim_A <- reactive({
+  rbeta(10000, post_A()[1], post_A()[2])
+})
 
-sim_B <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
-  rbeta(10000, post_B[1], post_B[2])
-}, ignoreNULL = FALSE)
+sim_B <- reactive({
+  rbeta(10000, post_B()[1], post_B()[2])
+})
+
+prob_B_better_than_A <- reactive({
+  mean(sim_B() > sim_A())
+})
 
 
-prob_B_better_than_A <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
-  mean(sim_B > sim_A)
-}, ignoreNULL = FALSE)
-
+# renderValueBox({
+#         valueBox(
+#             prob_B_better_than_A(),
+#             icon = "fa-arrow-up"
+#         )
+#     })
 ```
 
-
 ```{r}
-max_x_lim <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
-  max(max(sim_A), max(sim_B))
-}, ignoreNULL = FALSE)
+# Assuming you are within a Shiny server function
 
-min_x_lim <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
-  min(min(sim_A), min(sim_B))
-}, ignoreNULL = FALSE)
+# Define these as reactive expressions
+max_x_lim <- reactive({
+    max(max(sim_A()), max(sim_B()))
+})
 
+min_x_lim <- reactive({
+    min(min(sim_A()), min(sim_B()))
+})
 
 # Create a sequence of conversion rates
-x <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
-  seq(0, 1, length.out = 1000)
-}, ignoreNULL = FALSE)
+x <- seq(0, 1, length.out = 1000)
 
+# Calculate densities as reactive expressions
+density_A <- reactive({
+    dbeta(x, post_A()[1], post_A()[2])
+})
 
-# Calculate densities
-density_A <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
-  dbeta(x(), post_A[1], post_A[2])
-}, ignoreNULL = FALSE)
-
-density_B <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
-  dbeta(x(), post_B[1], post_B[2])
-}, ignoreNULL = FALSE)
+density_B <- reactive({
+    dbeta(x, post_B()[1], post_B()[2])
+})
 
 
 ```
-
-## Column {data-height="100"}
 
 ```{r}
-# # Create a data frame for plotting
-# df <- eventReactive(eventExpr = input$apply_2,  valueExpr = {
-#   data.frame(x(), Group_A = density_A, Group_B = density_B)
-# }, ignoreNULL = FALSE)
-# 
-# renderPlot({
-#   df() |>
-#     ggplot(aes(x)) +
-#     # geom_line(aes(y = Group_A, color = "Group A"), linewidth = 0.8) +
-#     # geom_line(aes(y = Group_B, color = "Group B"), linewidth = 0.8) +
-#     geom_area(aes(y = Group_A, fill = "Group A"), alpha = 0.45) +  # Using geom_area for Group A
-#     geom_area(aes(y = Group_B, fill = "Group B"), alpha = 0.45) +  # Using geom_area for Group B
-#     scale_fill_manual(values = c("Group A" = "#2E465F", "Group B" = "#D81B60"),
-#                       name   = "Groups:") +
-#     labs(title = NULL,
-#          x     = "Conversion Rate",
-#          y     = "Density") +
-#     xlim(min_x_lim, max_x_lim) +
-#     theme(legend.position = "bottom")
-# })
+# Define df as a reactive expression
+df <- reactive({
+    data.frame(x = x, 
+               Group_A = density_A(),  # Ensure to call reactive expressions with ()
+               Group_B = density_B())  # Ensure to call reactive expressions with ()
+})
+
 ```
 
+## Column {data-height="300"}
 
+```{r}
+# Assuming this is inside a renderPlot({ ... }) in your Shiny server function
 
+renderPlot({
+  df_plot <- df()  # Get the data frame from the reactive expression
+  
+  ggplot(df_plot, aes(x = x)) +
+    geom_area(aes(y = Group_A, fill = "Group A"), alpha = 0.45) +  # Using geom_area for Group A
+    geom_area(aes(y = Group_B, fill = "Group B"), alpha = 0.45) +  # Using geom_area for Group B
+    scale_fill_manual(values = c("Group A" = "#2E465F", "Group B" = "#D81B60"),
+                      name   = "Groups:") +
+    labs(title = NULL,
+         x     = "Conversion Rate",
+         y     = "Density") +
+    theme_minimal() +
+    theme(panel.grid   = element_blank()) +
+    theme(legend.position = "bottom") +
+    scale_x_continuous(labels = scales::percent_format(),
+                       limits = c(min_x_lim(), max_x_lim()))
+})
 
+```
