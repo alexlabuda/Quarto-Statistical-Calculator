@@ -78,7 +78,6 @@ radioButtons("Test_type", "Test type:", c("Two-tailed" = "two.sided", "One-taile
 
 actionButton(inputId = "apply", label = "Apply", icon = icon("play-circle-fill"), 
              style = "color: #fff; background-color: #48718f; border-color: #48718f; font-family: roboto; font-size: 14px; font-weight: bold; line-height: 1.5; border-radius: 0.25rem; padding: 0.375rem 0.75rem; transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; cursor: pointer;  white-space: nowrap; vertical-align: middle; user-select: none; border: 1px solid transparent;")
-
 ```
 
 
@@ -100,7 +99,8 @@ data1 <- eventReactive(eventExpr = input$apply,  valueExpr = {
 data <- eventReactive(eventExpr = input$apply, 
                       valueExpr = {
                         seq(input$WeeklyTraffic / 2, input$WeeklyTraffic / 2 * 13, by = input$WeeklyTraffic / 2) %>%
-                          map_df(~ power.prop.test(p1 = input$Baseline / 100,
+                          map_df(~ power.prop.test(
+                                 p1          = input$Baseline / 100,
                                  p2          = NULL, 
                                  n           = .x, 
                                  power       = input$Power / 100, 
