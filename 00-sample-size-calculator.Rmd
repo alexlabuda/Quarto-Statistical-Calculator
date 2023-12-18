@@ -58,10 +58,6 @@ numericInput("SigLevel", "Significance level (α)", min = 1, max = 20,
 numericInput("Power", "Statistical power (1 - β)", min = 1, max = 99, 
              value = 80)
 
-# numericInput("MDE", "Minimum detectable threshold", min = 1, max = 50,
-#              value = 20)
-
-
 
 radioButtons("Test_type", "Test type:", c("Two-tailed" = "two.sided", "One-tailed" = "one.sided"), selected = "two.sided")
 
@@ -99,55 +95,8 @@ data <- eventReactive(eventExpr = input$apply,
                           mutate(effect = scales::percent(p2 / p1 - 1),
                                  total  = scales::comma(n * 2),
                                  n      = scales::comma(n))
-                          # mutate(Weeks  = str_c(row_number(), " ", "Weeks")) |> 
-                          # mutate(difference = abs(as.numeric(sub("%", "", effect)) - input$MDE))
                         },
                       ignoreNULL = FALSE)
-
-# Select MDE closest to input
-# mde_effect_selection <- eventReactive(eventExpr = input$apply, 
-#                                        valueExpr = {
-#                                          data() |> 
-#                                            filter(effect <= input$MDE) |> 
-#                                            slice_max(effect)
-#                                        },
-#                                        ignoreNULL = FALSE)
-
-# mde_effect_selection <- eventReactive(
-#   eventExpr = input$apply,
-#   valueExpr = {
-#     # Ensure the data is available and not empty
-#     if (is.null(data()) || nrow(data()) == 0) {
-#       return(NULL)
-#     }
-#     
-#     # Convert effect to numeric for comparison
-#     data_numeric_effect <- data() %>%
-#       mutate(effect_numeric = as.numeric(sub("%", "", effect)))
-# 
-#     min_effect <- min(data_numeric_effect$effect_numeric, na.rm = TRUE)
-#     
-#     if (input$MDE <= min_effect) {
-#       # Use slice_min if input$MDE is less than the smallest effect
-#       result <- data_numeric_effect %>%
-#         filter(effect_numeric <= min_effect) %>%
-#         slice_min(order_by = effect_numeric, with_ties = FALSE)
-#     } else {
-#       # Filter data where effect is less than or equal to input$MDE
-#       filtered_data <- data_numeric_effect %>%
-#         filter(effect_numeric <= input$MDE)
-#       
-#       # Use slice_max on the filtered data
-#       result <- filtered_data %>%
-#         slice_max(order_by = effect_numeric, with_ties = FALSE)
-#     }
-#     
-#     return(result)
-#   },
-#   ignoreNULL = FALSE
-# )
-
-
 
 ```
 
