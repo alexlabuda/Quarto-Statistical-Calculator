@@ -28,11 +28,9 @@ output:
 ```{r setup, include=FALSE}
 library(flexdashboard)
 library(tidyverse)
-library(broom)
 library(showtext)
+library(broom)
 library(DT)
-library(BayesFactor)
-
 
 font_add_google("Roboto", "roboto")
 ```
@@ -67,36 +65,59 @@ actionButton(inputId = "apply", label = "Apply", icon = icon("play-circle-fill")
 
 
 ```{r}
-data1 <- eventReactive(eventExpr = input$apply,  valueExpr = {
-  seq(input$WeeklyTraffic / 2, input$WeeklyTraffic / 2 * 8, by = input$WeeklyTraffic / 2) %>%
-        map_df(~ power.prop.test(p1          = input$Baseline / 100,
-                                 p2          = NULL, 
-                                 n           = .x, 
-                                 power       = input$Power / 100, 
-                                 sig.level   = input$SigLevel / 100,
-                                 alternative = input$Test_type) %>%
-                   tidy()) %>%
-        mutate(effect = p2 / p1 - 1,
-               total  = n * 2,
-               n      = n)
-}, ignoreNULL = FALSE)
+data1 <- eventReactive(
+  eventExpr = input$apply,
+  valueExpr = {
+    seq(input$WeeklyTraffic / 2,
+        input$WeeklyTraffic / 2 * 8,
+        by = input$WeeklyTraffic / 2) %>%
+      map_df(
+        ~ power.prop.test(
+          p1          = input$Baseline / 100,
+          p2          = NULL,
+          n           = .x,
+          power       = input$Power / 100,
+          sig.level   = input$SigLevel / 100,
+          alternative = input$Test_type
+        ) %>%
+          tidy()
+      ) %>%
+      mutate(
+        effect = p2 / p1 - 1,
+        total  = n * 2,
+        n      = n,
+        Weeks  = row_number()
+      )
+  },
+  ignoreNULL = FALSE
+)
 
-data <- eventReactive(eventExpr = input$apply, 
-                      valueExpr = {
-                        seq(input$WeeklyTraffic / 2, input$WeeklyTraffic / 2 * 8, by = input$WeeklyTraffic / 2) %>%
-                          map_df(~ power.prop.test(
-                                 p1          = input$Baseline / 100,
-                                 p2          = NULL, 
-                                 n           = .x, 
-                                 power       = input$Power / 100, 
-                                 sig.level   = input$SigLevel / 100,
-                                 alternative = input$Test_type) %>%
-                                   tidy()) %>%
-                          mutate(effect = scales::percent(p2 / p1 - 1),
-                                 total  = scales::comma(n * 2),
-                                 n      = scales::comma(n))
-                        },
-                      ignoreNULL = FALSE)
+data <- eventReactive(
+  eventExpr = input$apply,
+  valueExpr = {
+    seq(input$WeeklyTraffic / 2,
+        input$WeeklyTraffic / 2 * 8,
+        by = input$WeeklyTraffic / 2) %>%
+      map_df(
+        ~ power.prop.test(
+          p1          = input$Baseline / 100,
+          p2          = NULL,
+          n           = .x,
+          power       = input$Power / 100,
+          sig.level   = input$SigLevel / 100,
+          alternative = input$Test_type
+        ) %>%
+          tidy()
+      ) %>%
+      mutate(
+        effect = scales::percent(p2 / p1 - 1),
+        total  = scales::comma(n * 2),
+        n      = scales::comma(n),
+        Weeks  = row_number()
+      )
+  },
+  ignoreNULL = FALSE
+)
 
 ```
 
@@ -106,20 +127,25 @@ Row
 
 ```{r}
 DT::renderDataTable({
-  data() |> 
-     select(`A relative detectible MDE` = effect, 
-                                 `With a sample size in each group of` = n,
-                                 `And a total sample size of` = total)
-}, selection = "single", class = "display nowrap compact", 
-   filter = "none", rownames = TRUE, 
-   options = list(
-     dom = "t",
-     paging = FALSE,
-     ordering = FALSE,
-     searching = FALSE,
-     info = FALSE,
-     columnDefs = list(list(className = "dt-center", targets = "_all"))
-   ))
+  data() |>
+    select(
+      Weeks,
+      `A relative detectible MDE`           = effect,
+      `With a sample size in each group of` = n,
+      `And a total sample size of`          = total
+    )
+}, selection = "single", class = "display nowrap compact",
+filter = "none", rownames = FALSE,
+options = list(
+  dom         = "t",
+  paging      = FALSE,
+  ordering    = FALSE,
+  searching   = FALSE,
+  info        = FALSE,
+  columnDefs  = list(list(
+    className = "dt-center", targets = "_all"
+  ))
+))
 ```
 
 
