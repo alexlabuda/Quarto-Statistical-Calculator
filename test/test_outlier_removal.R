@@ -3,7 +3,7 @@
 
 # Libraries
 library(tidyverse)
-
+source("functions/helper_functions.R")
 
 # Data --------------------------------------------------------------------
 
@@ -28,7 +28,18 @@ transactions_tbl |>
   coord_flip() +
   theme_minimal()
 
-
+# Test outlier removal function
+transactions_tbl |> 
+  outlier_removal("transaction_revenue") |> 
+  ggplot(aes(x = "", y = transaction_revenue)) +
+  geom_boxplot() +
+  labs(
+    title = "Transactions Revenue Boxplot",
+    x     = "",
+    y     = "Revenue"
+  ) +
+  coord_flip() +
+  theme_minimal()
 
 
 
