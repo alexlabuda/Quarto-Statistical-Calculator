@@ -27,3 +27,10 @@ transactions_tbl |>
   ) +
   coord_flip() +
   theme_minimal()
+
+
+
+
+
+
+
