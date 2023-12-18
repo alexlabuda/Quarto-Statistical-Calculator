@@ -5,7 +5,7 @@ account: alexlabuda
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 10820106
-bundleId: 8061817
+bundleId: 8061874
 url: https://alexlabuda.shinyapps.io/Simple-Sample-Size-Calculator/
 version: 1
 asMultiple: FALSE

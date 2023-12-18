@@ -39,8 +39,6 @@ font_add_google("Roboto", "roboto")
 Sidebar {.sidebar data-width="350" data-height="500"}
 -----------------------------------------------------------------------
 
-**Data input:**
-
 ```{r}
 
 # Weekly traffic
@@ -56,12 +54,25 @@ numericInput("SigLevel", "Significance level (α)", min = 1, max = 20,
 numericInput("Power", "Statistical power (1 - β)", min = 1, max = 99, 
              value = 80)
 
+# Add dropdown selection
 
 radioButtons("Test_type", "Test type:", c("Two-tailed" = "two.sided", "One-tailed" = "one.sided"), selected = "two.sided")
 
+# selectInput("Test_type", "Test type:", c("Two-tailed" = "two.sided", "One-tailed" = "one.sided"), selected = "two.sided")
+
 actionButton(inputId = "apply", label = "Apply", icon = icon("play-circle-fill"), 
              style = "color: #fff; background-color: #48718f; border-color: #48718f; font-family: roboto; font-size: 14px; font-weight: bold; line-height: 1.5; border-radius: 0.25rem; padding: 0.375rem 0.75rem; transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; cursor: pointer;  white-space: nowrap; vertical-align: middle; user-select: none; border: 1px solid transparent;")
+br()
+br()
 ```
+
+**Weekly traffic:** This is the number of people who visit your website or use your service each week.
+
+**Baseline conversion rate:** The conversion rate of your control group before any changes or tests are applied.
+
+**Significance level (α):** Threshold to determine the statistical significance of an outcome. It's the risk you are willing to take of a false positive error.
+
+**Statistical power (1 - β):** This refers to the likelihood that your test will correctly detect a true effect or difference when there is one.
 
 
 ```{r}
@@ -129,10 +140,9 @@ Row
 DT::renderDataTable({
   data() |>
     select(
-      Weeks,
-      `A relative detectible MDE`           = effect,
-      `With a sample size in each group of` = n,
-      `And a total sample size of`          = total
+      `# of Weeks`                                 = Weeks,
+      `A Relative Minimal Detectible Effect (MDE)` = effect,
+      `Sample Size per Variant`                    = n
     )
 }, selection = "single", class = "display nowrap compact",
 filter = "none", rownames = FALSE,
