@@ -1,5 +1,5 @@
 ---
-title: "A/B Testing Calculators"
+title: "A/B Pre-test Sample Size"
 runtime: shiny
 output: 
   flexdashboard::flex_dashboard:
@@ -33,26 +33,15 @@ library(showtext)
 library(DT)
 library(BayesFactor)
 
-# theme_set(theme_minimal())
 
 font_add_google("Roboto", "roboto")
 ```
 
 
-Pre-test Sample Size
-=======================================================================
-
-Sidebar {.sidebar data-width="500"}
+Sidebar {.sidebar data-width="350" data-height="500"}
 -----------------------------------------------------------------------
 
-**Weekly traffic:** This is the number of people who visit your website or use your service each week.
-
-**Baseline conversion rate:** The conversion rate of your control group before any changes or tests are applied. It as a starting point or the 'normal' rate at which visitors complete a desired action.
-
-**Significance level (α):** Threshold to determine the statistical significance of an outcome. It's the risk you are willing to take of a false positive error, or concluding there is an effect or difference when there actually is not.
-
-**Statistical power (1 - β):** This refers to the likelihood that your test will correctly detect a true effect or difference when there is one.
-
+**Data input:**
 
 ```{r}
 
@@ -69,8 +58,8 @@ numericInput("SigLevel", "Significance level (α)", min = 1, max = 20,
 numericInput("Power", "Statistical power (1 - β)", min = 1, max = 99, 
              value = 80)
 
-numericInput("MDE", "Minimum detectable threshold", min = 1, max = 50,
-             value = 20)
+# numericInput("MDE", "Minimum detectable threshold", min = 1, max = 50,
+#              value = 20)
 
 
 
@@ -83,7 +72,7 @@ actionButton(inputId = "apply", label = "Apply", icon = icon("play-circle-fill")
 
 ```{r}
 data1 <- eventReactive(eventExpr = input$apply,  valueExpr = {
-  seq(input$WeeklyTraffic / 2, input$WeeklyTraffic / 2 * 13, by = input$WeeklyTraffic / 2) %>%
+  seq(input$WeeklyTraffic / 2, input$WeeklyTraffic / 2 * 8, by = input$WeeklyTraffic / 2) %>%
         map_df(~ power.prop.test(p1          = input$Baseline / 100,
                                  p2          = NULL, 
                                  n           = .x, 
@@ -98,7 +87,7 @@ data1 <- eventReactive(eventExpr = input$apply,  valueExpr = {
 
 data <- eventReactive(eventExpr = input$apply, 
                       valueExpr = {
-                        seq(input$WeeklyTraffic / 2, input$WeeklyTraffic / 2 * 13, by = input$WeeklyTraffic / 2) %>%
+                        seq(input$WeeklyTraffic / 2, input$WeeklyTraffic / 2 * 8, by = input$WeeklyTraffic / 2) %>%
                           map_df(~ power.prop.test(
                                  p1          = input$Baseline / 100,
                                  p2          = NULL, 
@@ -109,9 +98,9 @@ data <- eventReactive(eventExpr = input$apply,
                                    tidy()) %>%
                           mutate(effect = scales::percent(p2 / p1 - 1),
                                  total  = scales::comma(n * 2),
-                                 n      = scales::comma(n)) |> 
-                          mutate(Weeks  = str_c(row_number(), " ", "Weeks")) |> 
-                          mutate(difference = abs(as.numeric(sub("%", "", effect)) - input$MDE))
+                                 n      = scales::comma(n))
+                          # mutate(Weeks  = str_c(row_number(), " ", "Weeks")) |> 
+                          # mutate(difference = abs(as.numeric(sub("%", "", effect)) - input$MDE))
                         },
                       ignoreNULL = FALSE)
 
@@ -124,39 +113,39 @@ data <- eventReactive(eventExpr = input$apply,
 #                                        },
 #                                        ignoreNULL = FALSE)
 
-mde_effect_selection <- eventReactive(
-  eventExpr = input$apply,
-  valueExpr = {
-    # Ensure the data is available and not empty
-    if (is.null(data()) || nrow(data()) == 0) {
-      return(NULL)
-    }
-    
-    # Convert effect to numeric for comparison
-    data_numeric_effect <- data() %>%
-      mutate(effect_numeric = as.numeric(sub("%", "", effect)))
-
-    min_effect <- min(data_numeric_effect$effect_numeric, na.rm = TRUE)
-    
-    if (input$MDE <= min_effect) {
-      # Use slice_min if input$MDE is less than the smallest effect
-      result <- data_numeric_effect %>%
-        filter(effect_numeric <= min_effect) %>%
-        slice_min(order_by = effect_numeric, with_ties = FALSE)
-    } else {
-      # Filter data where effect is less than or equal to input$MDE
-      filtered_data <- data_numeric_effect %>%
-        filter(effect_numeric <= input$MDE)
-      
-      # Use slice_max on the filtered data
-      result <- filtered_data %>%
-        slice_max(order_by = effect_numeric, with_ties = FALSE)
-    }
-    
-    return(result)
-  },
-  ignoreNULL = FALSE
-)
+# mde_effect_selection <- eventReactive(
+#   eventExpr = input$apply,
+#   valueExpr = {
+#     # Ensure the data is available and not empty
+#     if (is.null(data()) || nrow(data()) == 0) {
+#       return(NULL)
+#     }
+#     
+#     # Convert effect to numeric for comparison
+#     data_numeric_effect <- data() %>%
+#       mutate(effect_numeric = as.numeric(sub("%", "", effect)))
+# 
+#     min_effect <- min(data_numeric_effect$effect_numeric, na.rm = TRUE)
+#     
+#     if (input$MDE <= min_effect) {
+#       # Use slice_min if input$MDE is less than the smallest effect
+#       result <- data_numeric_effect %>%
+#         filter(effect_numeric <= min_effect) %>%
+#         slice_min(order_by = effect_numeric, with_ties = FALSE)
+#     } else {
+#       # Filter data where effect is less than or equal to input$MDE
+#       filtered_data <- data_numeric_effect %>%
+#         filter(effect_numeric <= input$MDE)
+#       
+#       # Use slice_max on the filtered data
+#       result <- filtered_data %>%
+#         slice_max(order_by = effect_numeric, with_ties = FALSE)
+#     }
+#     
+#     return(result)
+#   },
+#   ignoreNULL = FALSE
+# )
 
 
 
@@ -165,71 +154,6 @@ mde_effect_selection <- eventReactive(
 
 Row
 -----------------------------------------------------------------------
-
-### To achieve an MDE of {.value-box}
-
-```{r}
-renderValueBox({
-  valueBox(mde_effect_selection()$effect, icon = "fa-download")
-})
-```
-
-### The test will take {.value-box}
-
-```{r}
-renderValueBox({
-  valueBox(mde_effect_selection()$Weeks, icon = "fa-calendar")
-})
-```
-
-### Users from each group {.value-box}
-
-```{r}
-renderValueBox({
-  valueBox(mde_effect_selection()$n, icon = "fa-users")
-})
-```
-
-### Users is total {.value-box}
-
-```{r}
-renderValueBox({
-  valueBox(mde_effect_selection()$total, icon = "fa-users")
-})
-
-```
-
-Row
------------------------------------------------------------------------
-
-### What is the Minimum detectable effect by sample size? {data-width="400"}
-
-```{r}
-renderPlot({
-    data1() |> 
-        ggplot(aes(n, effect)) + 
-        geom_hline(yintercept = input$MDE / 100, linetype = 2, color = "#FF0266", alpha = 0.5, linewidth = 0.8) +
-        geom_col(alpha = 0.45, fill = "#48718f") +
-        theme_minimal(base_size = 18) +
-        scale_y_continuous(labels = scales::percent_format(),
-                           limits = c(0, NA)) +
-        scale_x_continuous(labels = scales::comma_format()) +
-        scale_color_gradient(high = "#0077CC", low = "#B8E0C5",
-                             labels = scales::comma_format()) +
-        labs(x = "Sample size", y = "Minimum Detectable Effect",
-             title = "What is the Minimum detectable effect by sample size?") +
-    theme(
-      panel.grid   = element_blank(),
-      plot.title   = element_text(family = "roboto", size = 18, face = "bold",
-                                  color  = "grey35"),
-      axis.title.y = element_text(family = "roboto", size = 16),
-      axis.title.x = element_text(family = "roboto", size = 16)
-    )
-})
-```
-
-
-### **With your selected parameters, you can measure:** {data-width="500"}
 
 ```{r}
 DT::renderDataTable({
@@ -249,147 +173,4 @@ DT::renderDataTable({
    ))
 ```
 
-<!-- Statistical Test Calculator (Bayesian) -->
-<!-- ======================================================================= -->
 
-<!-- Sidebar {.sidebar data-width="500"} -->
-<!-- ----------------------------------------------------------------------- -->
-
-<!-- **Setting Sample Sizes:** -->
-
-<!-- Control Group: Locate the input labeled "Sample Size (Control)" and enter the number representing your control group's sample size. -->
-
-<!-- Test Group: Similarly, for the test group, use the "Sample Size (Test)" input to set your sample size. -->
-
-<!-- **Entering Success Counts:** -->
-
-<!-- Control Group: Use the "Successes (Control)" field to input the number of successful outcomes in your control group. -->
-
-<!-- Test Group: For the test group, the "Successes (Test)" input works the same way. -->
-
-<!-- **Applying the Inputs:** After you have entered the sample sizes and success counts for both groups, the app will use these inputs for Bayesian statistical analysis. -->
-
-<!-- ```{r} -->
-<!-- numericInput("sample_size_control", "Sample Size (Control)", min = 10, max = 100000,  -->
-<!--              value = 10000) -->
-
-<!-- numericInput("sample_size_test", "Sample Size (Test)", min = 1, max = 100000,  -->
-<!--             value = 9000) -->
-
-<!-- numericInput("success_control", "Successes (Control)", min = 1, max = 50000,  -->
-<!--              value = 1500) -->
-
-<!-- numericInput("success_test", "Successes (Test)", min = 1, max = 50000,  -->
-<!--              value = 1450) -->
-
-
-<!-- # actionButton(inputId = "apply_2", label = "Apply", icon = icon("play-circle-fill"),  -->
-<!-- #              style = "color: #fff; background-color: #48718f; border-color: #48718f; font-family: roboto; font-size: 14px; font-weight: bold; line-height: 1.5; border-radius: 0.25rem; padding: 0.375rem 0.75rem; transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out; cursor: pointer;  white-space: nowrap; vertical-align: middle; user-select: none; border: 1px solid transparent;") -->
-
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- set.seed(123) -->
-
-<!-- # Using a uniform prior Beta(1,1) -->
-<!-- prior <- c(1, 1) -->
-
-
-<!-- # Define the reactive expressions -->
-<!-- post_A <- reactive({ -->
-<!--   c( -->
-<!--     input$success_control + prior[1], -->
-<!--     input$sample_size_control - input$success_control + prior[2] -->
-<!--   ) -->
-<!-- }) -->
-
-<!-- post_B <- reactive({ -->
-<!--   c(input$success_test + prior[1], -->
-<!--     input$sample_size_test - input$success_test + prior[2]) -->
-<!-- }) -->
-
-<!-- sim_A <- reactive({ -->
-<!--   rbeta(10000, post_A()[1], post_A()[2]) -->
-<!-- }) -->
-
-<!-- sim_B <- reactive({ -->
-<!--   rbeta(10000, post_B()[1], post_B()[2]) -->
-<!-- }) -->
-
-<!-- prob_B_better_than_A <- reactive({ -->
-<!--   mean(sim_B() > sim_A()) -->
-<!-- }) -->
-
-
-<!-- # renderValueBox({ -->
-<!-- #         valueBox( -->
-<!-- #             prob_B_better_than_A(), -->
-<!-- #             icon = "fa-arrow-up" -->
-<!-- #         ) -->
-<!-- #     }) -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- # Assuming you are within a Shiny server function -->
-
-<!-- # Define these as reactive expressions -->
-<!-- max_x_lim <- reactive({ -->
-<!--     max(max(sim_A()), max(sim_B())) -->
-<!-- }) -->
-
-<!-- min_x_lim <- reactive({ -->
-<!--     min(min(sim_A()), min(sim_B())) -->
-<!-- }) -->
-
-<!-- # Create a sequence of conversion rates -->
-<!-- x <- seq(0, 1, length.out = 1000) -->
-
-<!-- # Calculate densities as reactive expressions -->
-<!-- density_A <- reactive({ -->
-<!--     dbeta(x, post_A()[1], post_A()[2]) -->
-<!-- }) -->
-
-<!-- density_B <- reactive({ -->
-<!--     dbeta(x, post_B()[1], post_B()[2]) -->
-<!-- }) -->
-
-
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- # Define df as a reactive expression -->
-<!-- df <- reactive({ -->
-<!--     data.frame(x = x,  -->
-<!--                Group_A = density_A(),  # Ensure to call reactive expressions with () -->
-<!--                Group_B = density_B())  # Ensure to call reactive expressions with () -->
-<!-- }) -->
-
-<!-- ``` -->
-
-<!-- Row -->
-<!-- ----------------------------------------------------------------------- -->
-
-<!-- ### Histograms {data-width="500"} -->
-
-<!-- ```{r} -->
-<!-- # Assuming this is inside a renderPlot({ ... }) in your Shiny server function -->
-
-<!-- renderPlot({ -->
-<!--   df_plot <- df()  # Get the data frame from the reactive expression -->
-
-<!--   ggplot(df_plot, aes(x = x)) + -->
-<!--     geom_area(aes(y = Group_A, fill = "Group A"), alpha = 0.45) +  # Using geom_area for Group A -->
-<!--     geom_area(aes(y = Group_B, fill = "Group B"), alpha = 0.45) +  # Using geom_area for Group B -->
-<!--     scale_fill_manual(values = c("Group A" = "#2E465F", "Group B" = "#D81B60"), -->
-<!--                       name   = "Groups:") + -->
-<!--     labs(title = NULL, -->
-<!--          x     = "Conversion Rate", -->
-<!--          y     = "Density") + -->
-<!--     theme_minimal() + -->
-<!--     theme(panel.grid   = element_blank()) + -->
-<!--     theme(legend.position = "bottom") + -->
-<!--     scale_x_continuous(labels = scales::percent_format(), -->
-<!--                        limits = c(min_x_lim(), max_x_lim())) -->
-<!-- }) -->
-
-<!-- ``` -->
