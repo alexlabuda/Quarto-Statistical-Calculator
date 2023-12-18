@@ -48,13 +48,9 @@ outlier_removal <- function(data, column_to_handle,
         .data[[column_to_handle]] < lower_fence ~ "outlier",
         .default = "not_outlier"
       )) |> 
-    select(-iqr, -quant_25, -quant_75, -upper_fence, -lower_fence)
+    filter(outlier_flag == "not_outlier") |> 
+    select(-iqr, -quant_25, -quant_75, -upper_fence, -lower_fence, -outlier_flag)
+    
   return(data_clean)
 }
-
-
-# Test function
-
-transactions_tbl |> outlier_removal(transaction_revenue)
-
 
