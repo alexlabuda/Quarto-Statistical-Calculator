@@ -5,6 +5,9 @@
 library(tidyverse)
 library(broom)
 
+
+# Frequentist -------------------------------------------------------------
+
 weekly_traffic <- 5000
 p1             <- 10  # in %
 p2             <- NULL
@@ -28,25 +31,45 @@ data1 <-
            n      = n / 2)
 
 
+# Bayesian ----------------------------------------------------------------
+
+library(BayesPPD)
+
+# Sample data
+
+
+
+historical <- matrix(0, ncol=3, nrow=2)
+historical[1,] <- c(44, 535, 0.3)s
+historical[2,] <- c(33, 304, 0.3)
+
+
+set.seed(1)
+n.t_vals <- seq(from=600, to=1000, by=50)
+powers <- NULL
+
+for(i in 1:length(n.t_vals)){
+  n.t <- n.t_vals[i]
+  results <- power.two.grp.fixed.a0(data.type="Bernoulli", 
+                                    n.t=n.t, n.c=round(n.t/3), historical=historical,
+                                    samp.prior.mu.t=0.092, samp.prior.mu.c=0.092,
+                                    prior.mu.t.shape1=0.0001, prior.mu.t.shape2=0.0001, 
+                                    prior.mu.c.shape1=0.0001,prior.mu.c.shape2=0.0001,
+                                    delta=0.041, N=10000)
+  power <- results$`power/type I error`
+  powers <- c(powers, power)
+}
+
+powers
+
+df <- data.frame(sample_size=n.t_vals, power=powers)
+
+ggplot(data=df, aes(x=sample_size, y=powers)) +
+  geom_smooth(method = lm, formula = y ~ x, se = FALSE) +
+  geom_point() +
+  xlab("Sample Size") +
+  ylab("Power")
 
 
 
 
-data <- eventReactive(eventExpr = input$apply, 
-                      valueExpr = {
-                        seq(input$WeeklyTraffic / 2, input$WeeklyTraffic / 2 * 8, by = input$WeeklyTraffic / 2) %>%
-                          map_df(~ power.prop.test(
-                            p1          = input$Baseline / 100,
-                            p2          = NULL, 
-                            n           = .x, 
-                            power       = input$Power / 100, 
-                            sig.level   = input$SigLevel / 100,
-                            alternative = input$Test_type) %>%
-                              tidy()) %>%
-                          mutate(effect = scales::percent(p2 / p1 - 1),
-                                 total  = scales::comma(n * 2),
-                                 n      = scales::comma(n)) |> 
-                          mutate(Weeks  = str_c(row_number(), " ", "Weeks")) |> 
-                          mutate(difference = abs(as.numeric(sub("%", "", effect)) - input$MDE))
-                      },
-                      ignoreNULL = FALSE)
