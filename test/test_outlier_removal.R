@@ -18,6 +18,7 @@ transactions_tbl |> glimpse()
 
 # Visualize outliers with boxplot
 transactions_tbl |> 
+  outlier_winsorize("transaction_revenue") |> 
   ggplot(aes(x = "", y = transaction_revenue)) +
   geom_boxplot() +
   labs(
