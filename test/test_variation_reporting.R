@@ -211,3 +211,5 @@ transactions_winsorized_tbl |>
 
 ggsave("test/artifacts/boxplot_sonesta_winsored_data.jpg", width = 10, height = 6, dpi = 300)
 
+
+
