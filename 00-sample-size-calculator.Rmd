@@ -83,7 +83,7 @@ actionButton(inputId = "apply", label = "Apply", icon = icon("play-circle-fill")
 
 ```{r}
 data1 <- eventReactive(eventExpr = input$apply,  valueExpr = {
-  seq(input$WeeklyTraffic, input$WeeklyTraffic* 13, by = input$WeeklyTraffic) %>%
+  seq(input$WeeklyTraffic, input$WeeklyTraffic * 13, by = input$WeeklyTraffic) %>%
         map_df(~ power.prop.test(p1          = input$Baseline / 100,
                                  p2          = NULL, 
                                  n           = .x, 
@@ -100,7 +100,7 @@ data1 <- eventReactive(eventExpr = input$apply,  valueExpr = {
 
 data <- eventReactive(eventExpr = input$apply, 
                       valueExpr = {
-                        seq(input$WeeklyTraffic, input$WeeklyTraffic* 13, by = input$WeeklyTraffic) %>%
+                        seq(input$WeeklyTraffic, input$WeeklyTraffic * 13, by = input$WeeklyTraffic) %>%
                           map_df(~ power.prop.test(
                                  p1          = input$Baseline / 100,
                                  p2          = NULL, 
