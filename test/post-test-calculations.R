@@ -161,11 +161,13 @@ tibble(
   scale_color_manual(values = c("Group A" = "#2E465F", "Group B" = "#D81B60")) +  # Define custom colors
   labs(
     title = "Conversion Rate",
-    x     = NULL, 
+    subtitle = "Group A vs Group B",
+    x     = "", 
     y     = ""
   ) +
   coord_flip() +
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        panel.grid = element_blank())
 
 
 
