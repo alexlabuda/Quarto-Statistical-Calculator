@@ -5,7 +5,7 @@
 library(tidyverse)
 library(broom)
 
-weekly_traffic <- 1000
+weekly_traffic <- 5000
 p1             <- 10  # in %
 p2             <- NULL
 power          <- 80  # in %
@@ -24,8 +24,8 @@ data1 <-
                              strict      = TRUE) |> 
              tidy()) |> 
     mutate(mde    = p2 / p1 - 1,
-           total  = n * 2,
-           n      = n)
+           total  = n,
+           n      = n / 2)
 
 
 
