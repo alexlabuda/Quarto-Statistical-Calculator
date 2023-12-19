@@ -83,33 +83,37 @@ actionButton(inputId = "apply", label = "Apply", icon = icon("play-circle-fill")
 
 ```{r}
 data1 <- eventReactive(eventExpr = input$apply,  valueExpr = {
-  seq(input$WeeklyTraffic / 2, input$WeeklyTraffic / 2 * 13, by = input$WeeklyTraffic / 2) %>%
+  seq(input$WeeklyTraffic, input$WeeklyTraffic* 13, by = input$WeeklyTraffic) %>%
         map_df(~ power.prop.test(p1          = input$Baseline / 100,
                                  p2          = NULL, 
                                  n           = .x, 
                                  power       = input$Power / 100, 
                                  sig.level   = input$SigLevel / 100,
-                                 alternative = input$Test_type) %>%
+                                 alternative = input$Test_type,
+                                 strict      = TRUE
+                                 ) %>%
                    tidy()) %>%
         mutate(effect = p2 / p1 - 1,
-               total  = n * 2,
-               n      = n)
+               total  = n,
+               n      = n / 2)
 }, ignoreNULL = FALSE)
 
 data <- eventReactive(eventExpr = input$apply, 
                       valueExpr = {
-                        seq(input$WeeklyTraffic / 2, input$WeeklyTraffic / 2 * 13, by = input$WeeklyTraffic / 2) %>%
+                        seq(input$WeeklyTraffic, input$WeeklyTraffic* 13, by = input$WeeklyTraffic) %>%
                           map_df(~ power.prop.test(
                                  p1          = input$Baseline / 100,
                                  p2          = NULL, 
                                  n           = .x, 
                                  power       = input$Power / 100, 
                                  sig.level   = input$SigLevel / 100,
-                                 alternative = input$Test_type) %>%
+                                 alternative = input$Test_type,
+                                 strict      = TRUE
+                                 ) %>%
                                    tidy()) %>%
                           mutate(effect = scales::percent(p2 / p1 - 1),
-                                 total  = scales::comma(n * 2),
-                                 n      = scales::comma(n)) |> 
+                                 total  = scales::comma(n),
+                                 n      = scales::comma(n / 2)) |> 
                           mutate(Weeks  = str_c(row_number(), " ", "Weeks")) |> 
                           mutate(difference = abs(as.numeric(sub("%", "", effect)) - input$MDE))
                         },
