@@ -43,6 +43,10 @@ ui <- fluidPage(
                                label = span("Conversions B", style = "color: #545454; font-size: 12px;")))
       ),
       br(),
+      
+      actionButton("applyBtn", "Apply Changes", class = "btn-primary"),
+      
+      br(),
       br(),
       h4("Settings", style = "border-bottom: 1px solid #cccccc; padding-bottom: 5px; font-size: 14px"),
       # Radio buttons for One-sided or Two-sided
@@ -92,18 +96,22 @@ server <- function(input, output) {
     }
   })
   
+  test_type <- eventReactive(input$applyBtn,{
+    return(input$testType)
+  }, ignoreNULL = FALSE)
+  
   
   # Reactive expression for conf level
-  confidence_level_reactive <- reactive({
+  confidence_level_reactive <- eventReactive(input$applyBtn,{
     # Mapping selected confidence level to its z-score
     conf_level <- as.numeric(input$confidenceLevel)
     z_score <- qnorm((1 + conf_level) / 2)  # Calculating the z-score for the given confidence level
     return(z_score)
-  })
+  }, ignoreNULL = FALSE)
   
 
   # Reactive expression for rates
-  rates_reactive <- reactive({
+  rates_reactive <- eventReactive(input$applyBtn,{
     
     visitors    <- c(A = input$visitorsA, B = input$visitorsB)
     conversions <- c(A = input$conversionsA, B = input$conversionsB)
@@ -114,10 +122,10 @@ server <- function(input, output) {
     
     rates       <- conversions / visitors
     return(rates)
-  })
+  }, ignoreNULL = FALSE)
   
   # Reactive expression for data
-  data_reactive <- reactive({
+  data_reactive <- eventReactive(input$applyBtn,{
   
     
     visitors    <- c(A = input$visitorsA,    B = input$visitorsB)
@@ -148,7 +156,7 @@ server <- function(input, output) {
     standard_errors      <- sqrt(rates * (1 - rates) / visitors)
     
     # Z-Score
-    z_score <- (rates["B"] - rates["A"]) / sqrt(sum(standard_errors^2))
+    # z_score <- (rates["B"] - rates["A"]) / sqrt(sum(standard_errors^2))
     relative_uplift_conversion_rate <- (rates["B"] - rates["A"]) / rates["A"]
     
     z_score <- confidence_level_reactive()
@@ -171,7 +179,7 @@ server <- function(input, output) {
         simulations     = simulations
         )
       )  # Return the DataFrame for plotting
-  })
+  }, ignoreNULL = FALSE)
   
   # Plot Output
   output$conversionComparisonPlot <- renderPlot({
@@ -238,13 +246,13 @@ server <- function(input, output) {
     plot_density_comparison(simulations, rates, group_names, group_colors)
   }, height = 360)
   
-  relative_uplift_reactive <- reactive({
+  relative_uplift_reactive <- eventReactive(input$applyBtn, {
     data <- data_reactive()
     if (is.null(data) || is.null(data$relative_uplift)) {
       return(NULL)
     }
     return(data$relative_uplift)
-  })
+  }, ignoreNULL = FALSE)
   
   
   output$upliftBox <- renderValueBox({
@@ -257,13 +265,13 @@ server <- function(input, output) {
   })
   
   # Reactive expression for z-score
-  z_score_reactive <- reactive({
+  z_score_reactive <- eventReactive(input$applyBtn, {
     data <- data_reactive()
     if (is.null(data)) {
       return(NULL)
     }
     return(data$z_score)  # Assuming z_score is calculated and stored in data
-  })
+  }, ignoreNULL = FALSE)
   
   # Output of z-score
   output$zScoreBox <- renderValueBox({
@@ -286,9 +294,9 @@ server <- function(input, output) {
     }
     
     # Calculate p-value from z-score using hypothesis test input
-    if (input$testType == "Two-sided") {
+    if (test_type() == "Two-sided") {
       p_value <- 2 * pnorm(-abs(z_score)) # Use abs() to handle both positive and negative z-scores
-    } else if (input$testType == "One-sided") {
+    } else if (test_type() == "One-sided") {
       if (z_score < 0) {
         p_value <- pnorm(z_score, lower.tail = FALSE) # For negative z-scores, no need for lower.tail = FALSE
       } else {
@@ -307,13 +315,13 @@ server <- function(input, output) {
   })
   
   # Reactive expression for rate A
-  rateA_reactive <- reactive({
+  rateA_reactive <- eventReactive(input$applyBtn, {
     data <- data_reactive()
     if(is.null(data)) {
       return(NULL)
     }
     return(data$comparison_df %>% filter(type == "A") %>% .$rate)
-  })
+  }, ignoreNULL = FALSE)
   
   # Value box for rate A
   output$rateABox <- renderValueBox({
@@ -326,13 +334,13 @@ server <- function(input, output) {
   })
   
   # Reactive expression for rate B
-  rateB_reactive <- reactive({
+  rateB_reactive <- eventReactive(input$applyBtn, {
     data <- data_reactive()
     if(is.null(data)) {
       return(NULL)
     }
     return(data$comparison_df %>% filter(type == "B") %>% .$rate)
-  })
+  }, ignoreNULL = FALSE)
   
   # Value box for rate B
   output$rateBBox <- renderValueBox({
