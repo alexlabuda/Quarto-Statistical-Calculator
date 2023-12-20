@@ -31,6 +31,25 @@ sim_B <- rbeta(10000, post_B[1], post_B[2])
 # Probability that B is better than A
 prob_B_better_than_A <- mean(sim_B > sim_A)
 
+# Calculate other statistics
+rate_A <- conversions_a / visitors_a
+rate_B <- conversions_b / visitors_b
+
+# Pooled conversion rate
+overall_rate <- (conversions_a + conversions_b) / (visitors_a + visitors_b)
+
+# Z-Score for p-value calculation
+z_score <- (rate_B - rate_A) / sqrt(overall_rate * (1 - overall_rate) * (1/visitors_a + 1/visitors_b))
+
+standard_error_a <- sqrt(rate_A * (1 - rate_A) / visitors_a)
+standard_error_b <- sqrt(rate_B * (1 - rate_B) / visitors_b)
+
+z_score <- (rate_B - rate_A) / sqrt(standard_error_a^2 + standard_error_b^2)
+
+std_error_of_difference <- sqrt(standard_error_a^2 + standard_error_b^2)
+
+relative_uplift_conversion_rate <- (rate_B - rate_A) / rate_A
+
 
 
 # Plotting ----------------------------------------------------------------
@@ -128,23 +147,6 @@ df |>
     plot.title       = element_text(hjust = -0.08, vjust = 1.5, size = 10, face = "bold")
     )
 
-rate_A <- conversions_a / visitors_a
-rate_B <- conversions_b / visitors_b
-
-# Pooled conversion rate
-overall_rate <- (conversions_a + conversions_b) / (visitors_a + visitors_b)
-
-# Z-Score for p-value calculation
-z_score <- (rate_B - rate_A) / sqrt(overall_rate * (1 - overall_rate) * (1/visitors_a + 1/visitors_b))
-
-standard_error_a <- sqrt(rate_A * (1 - rate_A) / visitors_a)
-standard_error_b <- sqrt(rate_B * (1 - rate_B) / visitors_b)
-
-z_score <- (rate_B - rate_A) / sqrt(standard_error_a^2 + standard_error_b^2)
-
-std_error_of_difference <- sqrt(standard_error_a^2 + standard_error_b^2)
-
-relative_uplift_conversion_rate <- (rate_B - rate_A) / rate_A
 
 tibble(
   type         = c("Group A", "Group B"),
@@ -155,19 +157,23 @@ tibble(
 ) |> 
   # plot rate and error bars for each type
   ggplot(aes(fct_reorder(type, -rate), rate, color = type)) +
-  geom_crossbar(aes(ymin = conf_lower, ymax = conf_upper), width = 0.35, show.legend = FALSE, size = 0.35) +
+  geom_crossbar(aes(ymin = conf_lower, ymax = conf_upper), width = 0.32, show.legend = FALSE, size = 0.35) +
   geom_text(aes(label = scales::percent(rate, accuracy = 0.01)), nudge_x =  0.32, size = 3.2, check_overlap = TRUE) +
   scale_y_continuous(labels = scales::percent) +
   scale_color_manual(values = c("Group A" = "#2E465F", "Group B" = "#D81B60")) +  # Define custom colors
   labs(
     title = "Conversion Rate",
-    subtitle = "Group A vs Group B",
     x     = "", 
-    y     = ""
+    y     = NULL
   ) +
   coord_flip() +
-  theme(legend.position = "none",
-        panel.grid = element_blank())
+  theme(
+    legend.position = "none",
+    panel.grid = element_blank(),
+    axis.text.x = element_blank(),
+    # update background color
+    plot.background = element_rect(fill = "#F5F5F5", color = NA)
+    )
 
 
 
