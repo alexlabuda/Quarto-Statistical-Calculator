@@ -150,13 +150,13 @@ tibble(
   type         = c("Group A", "Group B"),
   rate         = c(rate_A, rate_B),
   std_err      = c(standard_error_a, standard_error_b),
-  conf_upper   = c(qnorm(0.95) * standard_error_a + rate_A, qnorm(0.95) * standard_error_b + rate_B),
-  conf_lower   = c(qnorm(0.05) * standard_error_a + rate_A, qnorm(0.05) * standard_error_b + rate_B)
+  conf_upper   = c(qnorm(0.90) * standard_error_a + rate_A, qnorm(0.90) * standard_error_b + rate_B),
+  conf_lower   = c(qnorm(0.1) * standard_error_a + rate_A, qnorm(0.1) * standard_error_b + rate_B)
 ) |> 
   # plot rate and error bars for each type
-  ggplot(aes(x = type, y = rate, color = type)) +
-  geom_crossbar(aes(ymin = conf_lower, ymax = conf_upper), width = 0.2, show.legend = FALSE, size = 0.35) +
-  geom_text(aes(label = scales::percent(rate, accuracy = 0.01)), nudge_x = 0.0, nudge_y = 0.009, size = 3.2, check_overlap = TRUE) +
+  ggplot(aes(fct_reorder(type, -rate), rate, color = type)) +
+  geom_crossbar(aes(ymin = conf_lower, ymax = conf_upper), width = 0.35, show.legend = FALSE, size = 0.35) +
+  geom_text(aes(label = scales::percent(rate, accuracy = 0.01)), nudge_x =  0.32, size = 3.2, check_overlap = TRUE) +
   scale_y_continuous(labels = scales::percent) +
   scale_color_manual(values = c("Group A" = "#2E465F", "Group B" = "#D81B60")) +  # Define custom colors
   labs(
