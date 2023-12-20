@@ -196,8 +196,8 @@ server <- function(input, output) {
     
     # ggplot code
     ggplot(comparison_df, aes(x = fct_reorder(type, rate, .na_rm = TRUE), y = rate, ymin = conf_lower, ymax = conf_upper, color = type)) +
-      geom_crossbar(position = position_dodge(0.5), width = 0.32, linewidth = 0.35) +
-      geom_text(aes(label = scales::percent(rate, accuracy = 0.01)), nudge_x =  0.25, size = 4, check_overlap = TRUE) +
+      geom_crossbar(position = position_dodge(0.5), width = 0.32, linewidth = 0.5) +
+      geom_text(aes(label = scales::percent(rate, accuracy = 0.01)), nudge_x =  0.25, size = 5, check_overlap = TRUE) +
       scale_y_continuous(labels = scales::percent) +
       scale_color_manual(values = c("A" = "#2E465F", "B" = "#D81B60")) +
       labs(
@@ -271,7 +271,7 @@ server <- function(input, output) {
     if (is.null(z_score)) {
       valueBox("N/A", "Z-Score", width = NULL)
     } else {
-      valueBox(round(z_score, 3), "zScore")
+      valueBox(round(z_score, 4), "zScore")
     }
   })
   
@@ -279,6 +279,11 @@ server <- function(input, output) {
   # Output of p-value
   output$pValueBox <- renderValueBox({
     z_score <- z_score_reactive() # Ensure this reactive function is defined elsewhere in your Shiny app
+    
+    # Validate z_score
+    if (is.na(z_score) || !is.numeric(z_score) || length(z_score) == 0) {
+      return(valueBox("N/A", "p-value"))
+    }
     
     # Calculate p-value from z-score using hypothesis test input
     if (input$testType == "Two-sided") {
@@ -297,7 +302,7 @@ server <- function(input, output) {
     if (is.null(p_value)) {
       valueBox("N/A", "p-value")
     } else {
-      valueBox(round(p_value, 3), "pValue")
+      valueBox(round(p_value, 4), "pValue")
     }
   })
   
