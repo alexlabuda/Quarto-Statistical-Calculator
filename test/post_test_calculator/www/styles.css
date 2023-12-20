@@ -1,0 +1,15 @@
+.shiny-plot-output {
+  margin-bottom: 1px; /* Adjust the margin as needed */
+}
+
+.value-box .value {
+  font-size: 16px; /* Change the size as needed */
+}
+
+body {
+  font-size: 12px; /* Change the size as needed */
+}
+
+h3 {
+  font-size: 18px; /* Change the size as needed */
+}
