@@ -120,7 +120,7 @@ server <- function(input, output) {
   data_reactive <- reactive({
   
     
-    visitors    <- c(A = input$visitorsA, B = input$visitorsB)
+    visitors    <- c(A = input$visitorsA,    B = input$visitorsB)
     conversions <- c(A = input$conversionsA, B = input$conversionsB)
     
     if(any(is.null(visitors), is.null(conversions), visitors < 0, conversions < 0, conversions > visitors)) {
@@ -227,9 +227,9 @@ server <- function(input, output) {
                      axis.text  = element_blank()) +
                annotate("text", x = 1, y = 1, 
                         label = "Invalid input. Please check your data.\nConversions must be less than visitors", 
-                        size = 6, col = "#D81B60")) # Do not render the plot if data is NULL or contains NA
+                        size = 6, col = "#D81B60")) 
     }
-    
+  
     # Define group names and colors (adjust as needed)
     group_names <- c("A", "B")
     group_colors <- c("A" = "#2E465F", "B" = "#D81B60")
@@ -278,17 +278,22 @@ server <- function(input, output) {
   
   # Output of p-value
   output$pValueBox <- renderValueBox({
-    z_score <- z_score_reactive()
+    z_score <- z_score_reactive() # Ensure this reactive function is defined elsewhere in your Shiny app
     
     # Calculate p-value from z-score using hypothesis test input
     if (input$testType == "Two-sided") {
-      p_value <- 2 * pnorm(-abs(z_score))
+      p_value <- 2 * pnorm(-abs(z_score)) # Use abs() to handle both positive and negative z-scores
     } else if (input$testType == "One-sided") {
-      p_value <- pnorm(-abs(z_score))
+      if (z_score < 0) {
+        p_value <- pnorm(z_score, lower.tail = FALSE) # For negative z-scores, no need for lower.tail = FALSE
+      } else {
+        p_value <- pnorm(z_score, lower.tail = FALSE) # For positive z-scores in a one-sided test
+      }
     } else {
       p_value <- NULL
     }
     
+    # Display the p-value in a value box
     if (is.null(p_value)) {
       valueBox("N/A", "p-value")
     } else {
