@@ -72,42 +72,6 @@ density_B <- dbeta(x, post_B[1], post_B[2])
 df <- data.frame(x, Group_A = density_A, Group_B = density_B)
 
 
-df |>
-  ggplot(aes(x)) +
-  # geom_line(aes(y = Group_A, color = "Group A"), linewidth = 0.8) +
-  # geom_line(aes(y = Group_B, color = "Group B"), linewidth = 0.8) +
-  geom_area(aes(y = Group_A, fill = "Group A"), alpha = 0.45) +  # Using geom_area for Group A
-  geom_area(aes(y = Group_B, fill = "Group B"), alpha = 0.45) +  # Using geom_area for Group B
-  scale_fill_manual(
-    values = c("Group A" = "#2E465F", "Group B" = "#D81B60"),
-    name   = "Groups:"
-  ) +
-  labs(
-    title = NULL,
-    x     = "Conversion Rate", 
-    y     = "Density"
-  ) +
-  xlim(min_x_lim, max_x_lim) +
-  theme(legend.position = "bottom")
-
-# Add vertical lines for the means
-df |>
-  ggplot(aes(x)) +
-  geom_area(aes(y = Group_A, fill = "Group A"), alpha = 0.45) +  # Using geom_area for Group A
-  geom_area(aes(y = Group_B, fill = "Group B"), alpha = 0.45) +  # Using geom_area for Group B
-  geom_vline(xintercept = mean_A, color = "#2E465F", linetype = "dashed", size = 0.5) + # Vertical line for Group A
-  geom_vline(xintercept = mean_B, color = "#D81B60", linetype = "dashed", size = 0.5) + # Vertical line for Group B
-  scale_fill_manual(
-    values = c("Group A" = "#2E465F", "Group B" = "#D81B60"),
-    name   = "Groups:"
-  ) +
-  labs(
-    title = NULL,
-    x     = "Conversion Rate", 
-    y     = "Density"
-  ) +
-  xlim(min_x_lim, max_x_lim) +
-  theme(legend.position = "bottom")
 
 # Add labels to the mean of each group
 
@@ -215,17 +179,29 @@ comparison_df <- tibble(
   type          = names(rates),
   rate          = rates,
   std_err       = standard_errors,
-  conf_interval = map2(rates, standard_errors, ~c(.x - qnorm(0.975) * .y, .x + qnorm(0.975) * .y))
+  conf_lower    = rates - qnorm(0.99) * standard_errors,
+  conf_upper    = rates + qnorm(0.99) * standard_errors
 )
 
-ggplot(comparison_df, aes(x = type, y = rate)) +
-  geom_pointrange(aes(ymin = conf_interval[[1]], ymax = conf_interval[[2]]), 
-                  position = position_dodge(0.5)) +
-  geom_text(aes(label = scales::percent(rate, accuracy = 0.01)), vjust = -0.5) +
-  labs(title = "Conversion Rates with Confidence Intervals", x = "Group", y = "Conversion Rate") +
-  theme_minimal() + 
-  theme(legend.position = "none") +
-  coord_flip()
+comparison_df |> 
+  ggplot(aes(x = fct_reorder(type, -rate), y = rate, ymin = conf_lower, ymax = conf_upper, color = type)) +
+  geom_crossbar(position = position_dodge(0.5), width = 0.32, size = 0.35) +
+  geom_text(aes(label = scales::percent(rate, accuracy = 0.01)), nudge_x =  0.32, size = 3.2, check_overlap = TRUE) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_color_manual(values = c("A" = "#2E465F", "B" = "#D81B60")) +  # Define custom colors
+  labs(
+    title = "Conversion Rate",
+    x     = "", 
+    y     = NULL
+  ) +
+  coord_flip() +
+  theme(
+    legend.position = "none",
+    panel.grid = element_blank(),
+    axis.text.x = element_blank(),
+    # update background color
+    plot.background = element_rect(fill = "#F5F5F5", color = NA)
+  )
 
 
 
@@ -248,11 +224,6 @@ plot_density_comparison <- function(simulations, rates, group_names, group_color
     p <- p + geom_vline(xintercept = mean_rate, color = color, linetype = "dashed", linewidth = 0.3) +
       annotate("text", x = (mean_rate + 0.0007), y = 50, label = str_c("CR ", group_name, ": ", scales::percent(mean_rate, accuracy = 0.01)),
                color = color, angle = 90, check_overlap = TRUE, size = 3.2)  # Adjust y as needed
-    # +
-    #   geom_text(aes(x = mean_rate, y = 40, label = scales::percent(mean_rate, accuracy = 0.01)),
-    #             color = color, nudge_x = 0.001,
-    #             angle = 90, check_overlap = TRUE,
-    #             size = 3.2)  # Adjust y as needed
   }
   
   # Final touches
