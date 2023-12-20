@@ -176,6 +176,107 @@ tibble(
     )
 
 
+# Update to above code ----------------------------------------------------
+library(tidyverse)
+library(BayesFactor)
+theme_set(theme_minimal())
+
+# Data
+visitors    <- c(A = 8500, B = 8500)
+conversions <- c(A = 1500, B = 1650)
+
+# Posterior Distributions
+prior <- c(1, 1)
+post  <- rbind(
+  c(conversions["A"] + prior[1], visitors["A"] - conversions["A"] + prior[2]),
+  c(conversions["B"] + prior[1], visitors["B"] - conversions["B"] + prior[2])
+)
+
+# Simulations
+set.seed(123)
+simulations <- list(
+  A = rbeta(100000, post[1, 1], post[1, 2]),
+  B = rbeta(100000, post[2, 1], post[2, 2])
+)
+
+# Statistics
+prob_B_better_than_A <- mean(simulations$B > simulations$A)
+rates                <- conversions / visitors
+overall_rate         <- sum(conversions) / sum(visitors)
+standard_errors      <- sqrt(rates * (1 - rates) / visitors)
+
+# Z-Score
+z_score <- (rates["B"] - rates["A"]) / sqrt(sum(standard_errors^2))
+relative_uplift_conversion_rate <- (rates["B"] - rates["A"]) / rates["A"]
+
+
+# Compare conversion rates with error bars
+comparison_df <- tibble(
+  type          = names(rates),
+  rate          = rates,
+  std_err       = standard_errors,
+  conf_interval = map2(rates, standard_errors, ~c(.x - qnorm(0.975) * .y, .x + qnorm(0.975) * .y))
+)
+
+ggplot(comparison_df, aes(x = type, y = rate)) +
+  geom_pointrange(aes(ymin = conf_interval[[1]], ymax = conf_interval[[2]]), 
+                  position = position_dodge(0.5)) +
+  geom_text(aes(label = scales::percent(rate, accuracy = 0.01)), vjust = -0.5) +
+  labs(title = "Conversion Rates with Confidence Intervals", x = "Group", y = "Conversion Rate") +
+  theme_minimal() + 
+  theme(legend.position = "none") +
+  coord_flip()
+
+
+
+plot_density_comparison <- function(simulations, rates, group_names, group_colors) {
+  # Create a long format data frame for all groups
+  df <- map2_dfr(simulations, names(simulations), ~data.frame(Group = .y, ConversionRate = .x))
+  
+  # Start the ggplot
+  p <- ggplot(df, aes(x = ConversionRate, fill = Group)) +
+    geom_density(alpha = 0.25, linewidth = 0.35) +
+    scale_x_continuous(labels = scales::percent_format(accuracy = 1)) +
+    scale_fill_manual(values = group_colors)
+  
+  # Add mean lines and labels for each group
+  for (i in seq_along(group_names)) {
+    group_name <- group_names[i]
+    mean_rate  <- rates[group_name]
+    color      <- group_colors[i]
+    
+    p <- p + geom_vline(xintercept = mean_rate, color = color, linetype = "dashed", linewidth = 0.3) +
+      annotate("text", x = (mean_rate + 0.0007), y = 50, label = str_c("CR ", group_name, ": ", scales::percent(mean_rate, accuracy = 0.01)),
+               color = color, angle = 90, check_overlap = TRUE, size = 3.2)  # Adjust y as needed
+    # +
+    #   geom_text(aes(x = mean_rate, y = 40, label = scales::percent(mean_rate, accuracy = 0.01)),
+    #             color = color, nudge_x = 0.001,
+    #             angle = 90, check_overlap = TRUE,
+    #             size = 3.2)  # Adjust y as needed
+  }
+  
+  # Final touches
+  p + labs(x = "", y = "") +
+    theme_minimal() + 
+    theme(
+      legend.position = "none", 
+      axis.text.y = element_blank(),
+      # panel.grid  = element_blank(),
+      panel.grid.major   = element_blank(),
+      panel.grid.major.y = element_blank(),
+      panel.grid.minor.y = element_blank()
+      # panel.grid.minor.y = element_blank()
+      )
+}
+
+# Usage
+group_names <- c("A", "B")
+group_colors <- c("A" = "#2E465F", "B" = "#D81B60")
+plot_density_comparison(simulations, rates, group_names, group_colors)
+
+
+
+
 
 # Test BayesAB ------------------------------------------------------------
 

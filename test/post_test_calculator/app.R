@@ -37,16 +37,16 @@ ui <- fluidPage(
   #     h1("AB Test Evaluation", style = "color: black; font-size: 28px; text-align: left;")),
   
   div(class = "header", style = "display: flex; align-items: center;",
-      img(src = "ZZ-logo_Z-only.png", height = "60px", style = "margin-right: 10px;"),
+      img(src = "ZZ-logo_Z-only.png", height = "110px", style = "margin-right: 10px;"),
       div(class = "titlePanel", 
-          h1("AB Test Evaluation", style = "margin: 0; color: #333232; font-size: 40px;")
+          h1("AB Test Evaluation", style = "margin: 0; color: #333232; font-size: 46px;")
       )
   ),
   
   sidebarLayout(
     sidebarPanel(
-      h5("Is your test result significant? Does it have enough power?"),
-      h6("Play with the controls and get a better feel for how a lower confidence level will boost the power or how an increase in test size can make a small conversion rate difference significant."),
+      h4("Is your test result significant? Does it have enough power?", style = "font-size: 20px"),
+      h5("Play with the controls and get a better feel for how a lower confidence level will boost the power or how an increase in test size can make a small conversion rate difference significant."),
       br(),
       # Use fluidRow and columns to position inputs side by side
       h4("Test data", style = "border-bottom: 1px solid #cccccc; padding-bottom: 5px; font-size: 14px"),
