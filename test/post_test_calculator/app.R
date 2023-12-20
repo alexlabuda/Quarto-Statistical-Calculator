@@ -31,7 +31,18 @@ library(shiny)
 
 ui <- fluidPage(
   
-  titlePanel("AB Test Evaluation"),
+  # titlePanel("AB Test Evaluation"),
+  
+  # div(class = "titlePanel", 
+  #     h1("AB Test Evaluation", style = "color: black; font-size: 28px; text-align: left;")),
+  
+  div(class = "header", style = "display: flex; align-items: center;",
+      img(src = "ZZ-logo_Z-only.png", height = "60px", style = "margin-right: 10px;"),
+      div(class = "titlePanel", 
+          h1("AB Test Evaluation", style = "margin: 0; color: #333232; font-size: 40px;")
+      )
+  ),
+  
   sidebarLayout(
     sidebarPanel(
       h5("Is your test result significant? Does it have enough power?"),
@@ -41,24 +52,24 @@ ui <- fluidPage(
       h4("Test data", style = "border-bottom: 1px solid #cccccc; padding-bottom: 5px; font-size: 14px"),
       fluidRow(
         column(6, numericInput("visitorsA", "Visitors A", value = 0,
-                               label = span("Visitors A", style = "color: #545454; font-size: 11px;"))),
+                               label = span("Visitors A", style = "color: #545454; font-size: 12px;"))),
         column(6, numericInput("conversionsA", "Conversions A", value = 0,
-                               label = span("Conversions A", style = "color: #545454; font-size: 11px;")))
+                               label = span("Conversions A", style = "color: #545454; font-size: 12px;")))
       ),
       fluidRow(
         column(6, numericInput("visitorsB", "Visitors B", value = 0,
-                               label = span("Visitors B", style = "color: #545454; font-size: 11px;"))),
+                               label = span("Visitors B", style = "color: #545454; font-size: 12px;"))),
         column(6, numericInput("conversionsB", "Conversions B", value = 0,
-                               label = span("Conversions B", style = "color: #545454; font-size: 11px;")))
+                               label = span("Conversions B", style = "color: #545454; font-size: 12px;")))
       ),
       h4("Settings", style = "border-bottom: 1px solid #cccccc; padding-bottom: 5px; font-size: 14px"),
       # Radio buttons for One-sided or Two-sided
-      radioButtons("testType", HTML('<span style="color: #545454; font-size: 11px;">Hypothesis</span>'),
+      radioButtons("testType", HTML('<span style="color: #545454; font-size: 12px;">Hypothesis</span>'),
                    choices = c("One-sided", "Two-sided"),
                    selected = "One-sided"),
       
       # Radio buttons for Confidence Level
-      radioButtons("confidenceLevel", HTML('<span style="color: #545454; font-size: 11px;">Confidence Level</span>'),
+      radioButtons("confidenceLevel", HTML('<span style="color: #545454; font-size: 12px;">Confidence Level</span>'),
                    choices = c("90%" = 0.90, "95%" = 0.95, "99%" = 0.99),
                    selected = 0.95)
     ),
