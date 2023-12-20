@@ -14,7 +14,7 @@ plot_density_comparison <- function(simulations, rates, group_names, group_color
     color <- group_colors[i]
     p <- p + geom_vline(xintercept = mean_rate, color = color, linetype = "dashed", linewidth = 0.3) +
       annotate("text", x = (mean_rate + 0.0006), y = 50, label = str_c("CR ", group_name, ": ", scales::percent(mean_rate, accuracy = 0.01)),
-               color = color, angle = 90, check_overlap = TRUE, size = 4.5)
+               color = color, angle = 90, check_overlap = TRUE, size = 5)
   }
 
   p + labs(x = "", y = "") +
