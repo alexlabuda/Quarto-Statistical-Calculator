@@ -29,6 +29,16 @@ plot_density_comparison <- function(simulations, rates, group_names, group_color
     )
 }
 
+
+checkInputs <- function(visitors, conversions) {
+  if(any(is.null(visitors), is.null(conversions),
+         !is.numeric(visitors), !is.numeric(conversions),
+         visitors <= 0, conversions < 0, conversions > visitors)) {
+    return(FALSE)
+  }
+  return(TRUE)
+}
+
 # # Testing function
 # plot_density_comparison <- function(simulations, rates, group_names, group_colors) {
 #   df <- map2_dfr(simulations, names(simulations), ~data.frame(Group = .y, ConversionRate = .x))
