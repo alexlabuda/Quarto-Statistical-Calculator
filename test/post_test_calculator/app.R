@@ -59,11 +59,12 @@ ui <- fluidPage(
     mainPanel(
       h4("Statistics", style = "border-bottom: 1px solid #cccccc; font-size: 14px; padding-bottom: 4px"),# Adjust the padding as needed
       fluidRow(
-        column(3, valueBoxOutput("upliftBox")),
-        column(3, valueBoxOutput("rateABox")),  # Added for rate A
-        column(3, valueBoxOutput("rateBBox")),  # Added for rate B
-        column(3, valueBoxOutput("zScoreBox"))
-      ),
+        column(2, valueBoxOutput("upliftBox"), offset = 1),
+        column(2, valueBoxOutput("rateABox")),  # Added for rate A
+        column(2, valueBoxOutput("rateBBox")),  # Added for rate B
+        column(2, valueBoxOutput("zScoreBox")),
+        column(2, valueBoxOutput("pValueBox"))      
+        ),
       h6(style = "border-bottom: 1px solid #cccccc; padding-bottom: 4px"),# Adjust the padding as needed
       fluidRow(
         column(6, offset = 3, plotOutput("conversionComparisonPlot", height ="250px"))
@@ -100,44 +101,7 @@ server <- function(input, output) {
     return(z_score)
   })
   
-  simulations_reactive <- reactive({
-    
-    visitors    <- c(A = input$visitorsA, B = input$visitorsB)
-    conversions <- c(A = input$conversionsA, B = input$conversionsB)
-    if (!checkInputs(visitors, conversions)) {
-      return(NULL)
-    }
-    # if(any(is.null(visitors), is.null(conversions), visitors < 0, conversions < 0, conversions > visitors, is.na(visitors), is.na(conversions))) {
-    #   return(NULL)  # Return NULL if inputs are not valid, missing, or NA
-    # }
-    
-    # Check for invalid inputs
-    if(any(is.null(visitors), is.null(conversions), 
-           !is.numeric(visitors), !is.numeric(conversions),
-           visitors <= 0, conversions < 0, conversions > visitors)) {
-      shinyjs::alert("Please enter valid numeric values for visitors and conversions.") 
-      shinyjs::disable("plotButton")  # Disable plot button or relevant UI element
-       # Alert message
-      return(NULL)  # Return NULL to prevent further execution
-    }
-    
-    shinyjs::enable("plotButton")
-    
-    # Posterior Distributions
-    prior <- c(1, 1)
-    post  <- rbind(
-      c(conversions["A"] + prior[1], visitors["A"] - conversions["A"] + prior[2]),
-      c(conversions["B"] + prior[1], visitors["B"] - conversions["B"] + prior[2])
-    )
-    
-    set.seed(123)
-    simulations <- list(
-      A = rbeta(100000, post[1, 1], post[1, 2]),
-      B = rbeta(100000, post[2, 1], post[2, 2])
-    )
-    return(simulations)
-  })
-  
+
   # Reactive expression for rates
   rates_reactive <- reactive({
     
@@ -203,7 +167,8 @@ server <- function(input, output) {
       list(
         comparison_df   = comparison_df,
         relative_uplift = relative_uplift_conversion_rate,
-        z_score         = z_score
+        z_score         = z_score,
+        simulations     = simulations
         )
       )  # Return the DataFrame for plotting
   })
@@ -252,7 +217,7 @@ server <- function(input, output) {
   output$densityComparisonPlot <- renderPlot({
     
     # Ensure the simulations data is available
-    simulations <- simulations_reactive()  # Replace with your actual reactive expression for simulations
+    simulations <- data_reactive()$simulations  # Replace with your actual reactive expression for simulations
     rates       <- rates_reactive()  # Replace with your actual reactive expression for rates
     
     if(is.null(simulations) || is.null(rates) || any(sapply(simulations, is.null)) || any(is.na(rates))) {
@@ -285,9 +250,9 @@ server <- function(input, output) {
   output$upliftBox <- renderValueBox({
     uplift <- relative_uplift_reactive()
     if (is.null(uplift)) {
-      valueBox("N/A", "Relative Uplift", icon = NULL)
+      valueBox("N/A", "CR Uplift", icon = NULL)
     } else {
-      valueBox(scales::percent(uplift, accuracy = 0.01), "CR Uplift", icon = NULL)
+      valueBox(scales::percent(uplift, accuracy = 0.01), "Uplift", icon = NULL)
     }
   })
   
@@ -304,9 +269,30 @@ server <- function(input, output) {
   output$zScoreBox <- renderValueBox({
     z_score <- z_score_reactive()
     if (is.null(z_score)) {
-      valueBox("N/A", "Z-Score")
+      valueBox("N/A", "Z-Score", width = NULL)
     } else {
-      valueBox(round(z_score, 3), "Z-Score")
+      valueBox(round(z_score, 3), "zScore")
+    }
+  })
+  
+  
+  # Output of p-value
+  output$pValueBox <- renderValueBox({
+    z_score <- z_score_reactive()
+    
+    # Calculate p-value from z-score using hypothesis test input
+    if (input$testType == "Two-sided") {
+      p_value <- 2 * pnorm(-abs(z_score))
+    } else if (input$testType == "One-sided") {
+      p_value <- pnorm(-abs(z_score))
+    } else {
+      p_value <- NULL
+    }
+    
+    if (is.null(p_value)) {
+      valueBox("N/A", "p-value")
+    } else {
+      valueBox(round(p_value, 3), "pValue")
     }
   })
   
@@ -325,7 +311,7 @@ server <- function(input, output) {
     if(is.null(rateA)) {
       valueBox("N/A", "CR A")
     } else {
-      valueBox(scales::percent(rateA, accuracy = 0.01), "Conversion Rate A")
+      valueBox(scales::percent(rateA, accuracy = 0.01), "CR A")
     }
   })
   
@@ -344,7 +330,7 @@ server <- function(input, output) {
     if(is.null(rateB)) {
       valueBox("N/A", "CR B")
     } else {
-      valueBox(scales::percent(rateB, accuracy = 0.01), "Conversion Rate B")
+      valueBox(scales::percent(rateB, accuracy = 0.01), "CR B")
     }
   })
   
