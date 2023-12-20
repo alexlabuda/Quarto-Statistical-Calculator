@@ -13,9 +13,9 @@ ui <- fluidPage(
   tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")),
   
   div(class = "header", style = "display: flex; align-items: center;",
-      img(src = "ZZ-logo_Z-only.png", height = "110px", style = "margin-right: 10px;"),
+      img(src = "ZZ-logo_Z-only.png", height = "90px", style = "margin-right: 10px;"),
       div(class = "titlePanel", 
-          h1("AB Test Evaluation", style = "margin: 0; color: #333232; font-size: 46px;")
+          h1("AB Test Evaluation", style = "margin: 0; color: #333232; font-size: 36px;")
       )
   ),
   
@@ -269,7 +269,7 @@ server <- function(input, output) {
     if(is.null(rateA)) {
       valueBox("N/A", "CR A", color = "gray")
     } else {
-      valueBox(scales::percent(rateA, accuracy = 0.01), "CR A")
+      valueBox(scales::percent(rateA, accuracy = 0.01), "Conversion Rate A")
     }
   })
   
@@ -288,7 +288,7 @@ server <- function(input, output) {
     if(is.null(rateB)) {
       valueBox("N/A", "CR B", color = "gray")
     } else {
-      valueBox(scales::percent(rateB, accuracy = 0.01), "CR B")
+      valueBox(scales::percent(rateB, accuracy = 0.01), "Conversion Rate B")
     }
   })
   
