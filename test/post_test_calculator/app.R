@@ -60,9 +60,9 @@ ui <- fluidPage(
       h4("Statistics", style = "border-bottom: 1px solid #cccccc; font-size: 14px; padding-bottom: 4px"),# Adjust the padding as needed
       fluidRow(
         column(3, valueBoxOutput("upliftBox")),
-        column(3, valueBoxOutput("zScoreBox")),
         column(3, valueBoxOutput("rateABox")),  # Added for rate A
-        column(3, valueBoxOutput("rateBBox"))   # Added for rate B
+        column(3, valueBoxOutput("rateBBox")),  # Added for rate B
+        column(3, valueBoxOutput("zScoreBox"))
       ),
       h6(style = "border-bottom: 1px solid #cccccc; padding-bottom: 4px"),# Adjust the padding as needed
       fluidRow(
