@@ -10,6 +10,8 @@ source("plot_density_function.R")
 
 ui <- fluidPage(
   
+  tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")),
+  
   div(class = "header", style = "display: flex; align-items: center;",
       img(src = "ZZ-logo_Z-only.png", height = "110px", style = "margin-right: 10px;"),
       div(class = "titlePanel", 
@@ -21,6 +23,7 @@ ui <- fluidPage(
     sidebarPanel(
       h4("Is your test result significant? Does it have enough power?", style = "font-size: 20px"),
       h5("Play with the controls and get a better feel for how a lower confidence level will boost the power or how an increase in test size can make a small conversion rate difference significant."),
+      br(),
       br(),
       # Use fluidRow and columns to position inputs side by side
       h4("Test data", style = "border-bottom: 1px solid #cccccc; padding-bottom: 5px; font-size: 14px"),
@@ -36,6 +39,8 @@ ui <- fluidPage(
         column(6, numericInput("conversionsB", "Conversions B", value = 1200,
                                label = span("Conversions B", style = "color: #545454; font-size: 12px;")))
       ),
+      br(),
+      br(),
       h4("Settings", style = "border-bottom: 1px solid #cccccc; padding-bottom: 5px; font-size: 14px"),
       # Radio buttons for One-sided or Two-sided
       radioButtons("testType", HTML('<span style="color: #545454; font-size: 12px;">Hypothesis</span>'),
@@ -49,11 +54,20 @@ ui <- fluidPage(
     ),
     
     mainPanel(
+      h4("Statistics", style = "border-bottom: 1px solid #cccccc; font-size: 14px; padding-bottom: 4px"),# Adjust the padding as needed
       fluidRow(
-        column(3, valueBoxOutput("upliftBox"), height = 1),
-        column(9, plotOutput("conversionComparisonPlot"), height = 1)
+        column(3, valueBoxOutput("upliftBox")),
+        column(3, valueBoxOutput("zScoreBox")),
+        column(3, valueBoxOutput("rateABox")),  # Added for rate A
+        column(3, valueBoxOutput("rateBBox"))   # Added for rate B
       ),
-      plotOutput("densityComparisonPlot")
+      h6(style = "border-bottom: 1px solid #cccccc; padding-bottom: 4px"),# Adjust the padding as needed
+      fluidRow(
+        column(6, offset = 3, plotOutput("conversionComparisonPlot", height ="250px"))
+      ),
+      h4("The expected distributions of variation A and B", style = "border-bottom: 1px solid #cccccc; font-size: 14px; padding-bottom: 4px"),# Adjust the padding as needed
+      plotOutput("densityComparisonPlot") # Adjust the padding as needed
+      
     )
     
   )
@@ -101,13 +115,14 @@ server <- function(input, output) {
   
   # Reactive expression for data
   data_reactive <- reactive({
+    
+    if(any(is.null(visitors), is.null(conversions), visitors < 0, conversions < 0, conversions > visitors)) {
+      return(NULL)  # Return NULL if inputs are not valid or missing
+    }
+    
     visitors    <- c(A = input$visitorsA, B = input$visitorsB)
     conversions <- c(A = input$conversionsA, B = input$conversionsB)
     
-    # Ensure the input values are appropriate
-    if(any(visitors < 0) || any(conversions < 0) || any(conversions > visitors)) {
-      return(NULL)  # Return NULL if inputs are not valid
-    }
     
     # Posterior Distributions
     prior <- c(1, 1)
@@ -143,11 +158,13 @@ server <- function(input, output) {
       conf_lower    = rates - z_score * standard_errors,
       conf_upper    = rates + z_score * standard_errors
     )
+    z_score <- (rates["B"] - rates["A"]) / sqrt(sum(standard_errors^2))
     
     return(
       list(
         comparison_df   = comparison_df,
-        relative_uplift = relative_uplift_conversion_rate
+        relative_uplift = relative_uplift_conversion_rate,
+        z_score         = z_score
         )
       )  # Return the DataFrame for plotting
   })
@@ -180,10 +197,9 @@ server <- function(input, output) {
         legend.position = "none",
         panel.grid      = element_blank(),
         axis.text.x     = element_blank(),
-        plot.background = element_rect(fill = "#F5F5F5", color = NA),
         axis.text       = element_text(color = "#545454", size = 11, face = "bold")
       )
-  }, height = 250)
+  }, width = 500)
   
   output$densityComparisonPlot <- renderPlot({
     # Ensure the simulations data is available
@@ -215,7 +231,64 @@ server <- function(input, output) {
     if (is.null(uplift)) {
       valueBox("N/A", "Relative Uplift", icon = NULL, color = "gray")
     } else {
-      valueBox(scales::percent(uplift, accuracy = 0.01), "Relative Uplift in CR", icon = NULL)
+      valueBox(scales::percent(uplift, accuracy = 0.01), "CR Uplift", icon = NULL)
+    }
+  })
+  
+  # Reactive expression for z-score
+  z_score_reactive <- reactive({
+    data <- data_reactive()
+    if (is.null(data)) {
+      return(NULL)
+    }
+    return(data$z_score)  # Assuming z_score is calculated and stored in data
+  })
+  
+  # Output of z-score
+  output$zScoreBox <- renderValueBox({
+    z_score <- z_score_reactive()
+    if (is.null(z_score)) {
+      valueBox("N/A", "Z-Score",  color = "gray")
+    } else {
+      valueBox(round(z_score, 3), "Z-Score")
+    }
+  })
+  
+  # Reactive expression for rate A
+  rateA_reactive <- reactive({
+    data <- data_reactive()
+    if(is.null(data)) {
+      return(NULL)
+    }
+    return(data$comparison_df %>% filter(type == "A") %>% .$rate)
+  })
+  
+  # Value box for rate A
+  output$rateABox <- renderValueBox({
+    rateA <- rateA_reactive()
+    if(is.null(rateA)) {
+      valueBox("N/A", "CR A", color = "gray")
+    } else {
+      valueBox(scales::percent(rateA, accuracy = 0.01), "CR A")
+    }
+  })
+  
+  # Reactive expression for rate B
+  rateB_reactive <- reactive({
+    data <- data_reactive()
+    if(is.null(data)) {
+      return(NULL)
+    }
+    return(data$comparison_df %>% filter(type == "B") %>% .$rate)
+  })
+  
+  # Value box for rate B
+  output$rateBBox <- renderValueBox({
+    rateB <- rateB_reactive()
+    if(is.null(rateB)) {
+      valueBox("N/A", "CR B", color = "gray")
+    } else {
+      valueBox(scales::percent(rateB, accuracy = 0.01), "CR B")
     }
   })
   
