@@ -21,7 +21,7 @@ plot_density_comparison <- function(simulations, rates, group_names, group_color
     theme_minimal() +
     theme(
       legend.position = "none",
-      axis.text.x = element_text(size = 12, face = "bold"),
+      axis.text.x = element_text(size = 11, face = "bold"),
       axis.text.y = element_blank(),
       panel.grid.major = element_blank(),
       panel.grid.major.y = element_blank(),
