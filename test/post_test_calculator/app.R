@@ -38,23 +38,27 @@ ui <- fluidPage(
       h6("Play with the controls and get a better feel for how a lower confidence level will boost the power or how an increase in test size can make a small conversion rate difference significant."),
       br(),
       # Use fluidRow and columns to position inputs side by side
-      h4("Test data", style = "border-bottom: 1px solid #cccccc; padding-bottom: 5px;"),
+      h4("Test data", style = "border-bottom: 1px solid #cccccc; padding-bottom: 5px; font-size: 14px"),
       fluidRow(
-        column(6, numericInput("visitorsA", "Visitors A", value = 0)),
-        column(6, numericInput("conversionsA", "Conversions A", value = 0))
+        column(6, numericInput("visitorsA", "Visitors A", value = 0,
+                               label = span("Visitors A", style = "color: #545454; font-size: 11px;"))),
+        column(6, numericInput("conversionsA", "Conversions A", value = 0,
+                               label = span("Conversions A", style = "color: #545454; font-size: 11px;")))
       ),
       fluidRow(
-        column(6, numericInput("visitorsB", "Visitors B", value = 0)),
-        column(6, numericInput("conversionsB", "Conversions B", value = 0))
+        column(6, numericInput("visitorsB", "Visitors B", value = 0,
+                               label = span("Visitors B", style = "color: #545454; font-size: 11px;"))),
+        column(6, numericInput("conversionsB", "Conversions B", value = 0,
+                               label = span("Conversions B", style = "color: #545454; font-size: 11px;")))
       ),
-      h4("Settings", style = "border-bottom: 1px solid #cccccc; padding-bottom: 5px;"),
+      h4("Settings", style = "border-bottom: 1px solid #cccccc; padding-bottom: 5px; font-size: 14px"),
       # Radio buttons for One-sided or Two-sided
-      radioButtons("testType", "Test Type",
+      radioButtons("testType", HTML('<span style="color: #545454; font-size: 11px;">Hypothesis</span>'),
                    choices = c("One-sided", "Two-sided"),
                    selected = "One-sided"),
       
       # Radio buttons for Confidence Level
-      radioButtons("confidenceLevel", "Confidence Level",
+      radioButtons("confidenceLevel", HTML('<span style="color: #545454; font-size: 11px;">Confidence Level</span>'),
                    choices = c("90%" = 0.90, "95%" = 0.95, "99%" = 0.99),
                    selected = 0.95)
     ),
