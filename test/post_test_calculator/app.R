@@ -271,7 +271,7 @@ server <- function(input, output) {
     
     # Call the plot_density_comparison function
     plot_density_comparison(simulations, rates, group_names, group_colors)
-  })
+  }, height = 360)
   
   relative_uplift_reactive <- reactive({
     data <- data_reactive()
