@@ -172,6 +172,7 @@ standard_errors      <- sqrt(rates * (1 - rates) / visitors)
 # Z-Score
 z_score <- (rates["B"] - rates["A"]) / sqrt(sum(standard_errors^2))
 relative_uplift_conversion_rate <- (rates["B"] - rates["A"]) / rates["A"]
+p_value <- 2 * pnorm(-abs(z_score))
 
 
 # Compare conversion rates with error bars
