@@ -2,6 +2,7 @@
 # Libraries
 library(shiny)
 library(shinydashboard)
+library(shinyjs)
 library(tidyverse)
 library(BayesFactor)
 theme_set(theme_minimal())
@@ -9,6 +10,8 @@ theme_set(theme_minimal())
 source("plot_density_function.R")
 
 ui <- fluidPage(
+  # Use shinyjs to hide the default Shiny progress bar
+  useShinyjs(),
   
   tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")),
   
@@ -73,9 +76,21 @@ ui <- fluidPage(
   )
 )
 
-
 # Server Logic
 server <- function(input, output) {
+  
+  # Observer to handle input validation and UI feedback
+  observe({
+    visitors    <- c(A = input$visitorsA, B = input$visitorsB)
+    conversions <- c(A = input$conversionsA, B = input$conversionsB)
+    
+    if (!checkInputs(visitors, conversions)) {
+      shinyjs::html("errorMessage", "Please enter valid numeric values for visitors and conversions.")
+    } else {
+      shinyjs::html("errorMessage", "")
+    }
+  })
+  
   
   # Reactive expression for conf level
   confidence_level_reactive <- reactive({
@@ -89,6 +104,24 @@ server <- function(input, output) {
     
     visitors    <- c(A = input$visitorsA, B = input$visitorsB)
     conversions <- c(A = input$conversionsA, B = input$conversionsB)
+    if (!checkInputs(visitors, conversions)) {
+      return(NULL)
+    }
+    # if(any(is.null(visitors), is.null(conversions), visitors < 0, conversions < 0, conversions > visitors, is.na(visitors), is.na(conversions))) {
+    #   return(NULL)  # Return NULL if inputs are not valid, missing, or NA
+    # }
+    
+    # Check for invalid inputs
+    if(any(is.null(visitors), is.null(conversions), 
+           !is.numeric(visitors), !is.numeric(conversions),
+           visitors <= 0, conversions < 0, conversions > visitors)) {
+      shinyjs::alert("Please enter valid numeric values for visitors and conversions.") 
+      shinyjs::disable("plotButton")  # Disable plot button or relevant UI element
+       # Alert message
+      return(NULL)  # Return NULL to prevent further execution
+    }
+    
+    shinyjs::enable("plotButton")
     
     # Posterior Distributions
     prior <- c(1, 1)
@@ -107,22 +140,28 @@ server <- function(input, output) {
   
   # Reactive expression for rates
   rates_reactive <- reactive({
+    
     visitors    <- c(A = input$visitorsA, B = input$visitorsB)
     conversions <- c(A = input$conversionsA, B = input$conversionsB)
+    
+    if(any(is.null(visitors), is.null(conversions), visitors < 0, conversions < 0, conversions > visitors, is.na(visitors), is.na(conversions))) {
+      return(NULL)  # Return NULL if inputs are not valid, missing, or NA
+    }
+    
     rates       <- conversions / visitors
     return(rates)
   })
   
   # Reactive expression for data
   data_reactive <- reactive({
-    
-    if(any(is.null(visitors), is.null(conversions), visitors < 0, conversions < 0, conversions > visitors)) {
-      return(NULL)  # Return NULL if inputs are not valid or missing
-    }
+  
     
     visitors    <- c(A = input$visitorsA, B = input$visitorsB)
     conversions <- c(A = input$conversionsA, B = input$conversionsB)
     
+    if(any(is.null(visitors), is.null(conversions), visitors < 0, conversions < 0, conversions > visitors)) {
+      return(NULL)  # Return NULL if inputs are not valid or missing
+    }
     
     # Posterior Distributions
     prior <- c(1, 1)
@@ -172,6 +211,15 @@ server <- function(input, output) {
   # Plot Output
   output$conversionComparisonPlot <- renderPlot({
     comparison_df <- data_reactive()$comparison_df  # Fetching the reactive data
+    if (is.null(comparison_df)) {
+      return(ggplot() + 
+               labs(x = NULL, y = NULL) +
+               theme(panel.grid = element_blank(),
+                     axis.text  = element_blank()) +
+               annotate("text", x = 1, y = 1, 
+                        label = "Invalid input. Please check your data.\nConversions must be less than visitors", 
+                        size = 6, col = "#D81B60"))
+    }
     
     if(is.null(comparison_df)) {
       return()  # Do not render the plot if data is NULL
@@ -183,7 +231,7 @@ server <- function(input, output) {
     
     # ggplot code
     ggplot(comparison_df, aes(x = fct_reorder(type, rate, .na_rm = TRUE), y = rate, ymin = conf_lower, ymax = conf_upper, color = type)) +
-      geom_crossbar(position = position_dodge(0.5), width = 0.32, size = 0.35) +
+      geom_crossbar(position = position_dodge(0.5), width = 0.32, linewidth = 0.35) +
       geom_text(aes(label = scales::percent(rate, accuracy = 0.01)), nudge_x =  0.25, size = 4, check_overlap = TRUE) +
       scale_y_continuous(labels = scales::percent) +
       scale_color_manual(values = c("A" = "#2E465F", "B" = "#D81B60")) +
@@ -202,12 +250,19 @@ server <- function(input, output) {
   }, width = 500)
   
   output$densityComparisonPlot <- renderPlot({
+    
     # Ensure the simulations data is available
     simulations <- simulations_reactive()  # Replace with your actual reactive expression for simulations
     rates       <- rates_reactive()  # Replace with your actual reactive expression for rates
     
-    if(is.null(simulations) || is.null(rates)) {
-      return()  # Do not render the plot if data is NULL
+    if(is.null(simulations) || is.null(rates) || any(sapply(simulations, is.null)) || any(is.na(rates))) {
+      return(ggplot() + 
+               labs(x = NULL, y = NULL) +
+               theme(panel.grid = element_blank(),
+                     axis.text  = element_blank()) +
+               annotate("text", x = 1, y = 1, 
+                        label = "Invalid input. Please check your data.\nConversions must be less than visitors", 
+                        size = 6, col = "#D81B60")) # Do not render the plot if data is NULL or contains NA
     }
     
     # Define group names and colors (adjust as needed)
@@ -220,16 +275,17 @@ server <- function(input, output) {
   
   relative_uplift_reactive <- reactive({
     data <- data_reactive()
-    if (is.null(data)) {
+    if (is.null(data) || is.null(data$relative_uplift)) {
       return(NULL)
     }
     return(data$relative_uplift)
   })
   
+  
   output$upliftBox <- renderValueBox({
     uplift <- relative_uplift_reactive()
     if (is.null(uplift)) {
-      valueBox("N/A", "Relative Uplift", icon = NULL, color = "gray")
+      valueBox("N/A", "Relative Uplift", icon = NULL)
     } else {
       valueBox(scales::percent(uplift, accuracy = 0.01), "CR Uplift", icon = NULL)
     }
@@ -248,7 +304,7 @@ server <- function(input, output) {
   output$zScoreBox <- renderValueBox({
     z_score <- z_score_reactive()
     if (is.null(z_score)) {
-      valueBox("N/A", "Z-Score",  color = "gray")
+      valueBox("N/A", "Z-Score")
     } else {
       valueBox(round(z_score, 3), "Z-Score")
     }
@@ -267,7 +323,7 @@ server <- function(input, output) {
   output$rateABox <- renderValueBox({
     rateA <- rateA_reactive()
     if(is.null(rateA)) {
-      valueBox("N/A", "CR A", color = "gray")
+      valueBox("N/A", "CR A")
     } else {
       valueBox(scales::percent(rateA, accuracy = 0.01), "Conversion Rate A")
     }
@@ -286,7 +342,7 @@ server <- function(input, output) {
   output$rateBBox <- renderValueBox({
     rateB <- rateB_reactive()
     if(is.null(rateB)) {
-      valueBox("N/A", "CR B", color = "gray")
+      valueBox("N/A", "CR B")
     } else {
       valueBox(scales::percent(rateB, accuracy = 0.01), "Conversion Rate B")
     }
@@ -296,4 +352,3 @@ server <- function(input, output) {
 
 # Run the App
 shinyApp(ui = ui, server = server)
-
