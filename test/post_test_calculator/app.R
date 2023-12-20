@@ -33,7 +33,7 @@ ui <- fluidPage(
       fluidRow(
         column(6, numericInput("visitorsA", "Visitors A", value = 10000,
                                label = span("Visitors A", style = "color: #545454; font-size: 12px;"))),
-        column(6, numericInput("conversionsA", "Conversions A", value = 1100,
+        column(6, numericInput("conversionsA", "Conversions A", value = 1110,
                                label = span("Conversions A", style = "color: #545454; font-size: 12px;")))
       ),
       fluidRow(
