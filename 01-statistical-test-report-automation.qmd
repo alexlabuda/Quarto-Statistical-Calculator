@@ -158,7 +158,10 @@ call_out_text <- case_when(
 ::: {.callout-`r callout`} 
 ## `r ifelse(test_outcome == 1, "Significant Test Result!", "The test result is not significant!")`
 
+<br>
+
 The observed difference in conversion rates between the two variations is (`r scales::percent(relative_uplift_conversion_rate, accuracy = 0.01)`). `r call_out_text`
+
 :::
 
 
