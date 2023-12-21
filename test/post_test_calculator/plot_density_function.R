@@ -39,6 +39,18 @@ checkInputs <- function(visitors, conversions) {
   return(TRUE)
 }
 
+
+isValidInput <- function(visitors, conversions) {
+  # Add check for empty input
+  if (any(sapply(visitors, is.null), sapply(conversions, is.null),
+          !is.numeric(visitors), !is.numeric(conversions),
+          visitors < 0, conversions < 0, conversions > visitors, 
+          is.na(visitors), is.na(conversions))) {
+    return(FALSE)
+  }
+  return(TRUE)
+}
+
 # # Testing function
 # plot_density_comparison <- function(simulations, rates, group_names, group_colors) {
 #   df <- map2_dfr(simulations, names(simulations), ~data.frame(Group = .y, ConversionRate = .x))

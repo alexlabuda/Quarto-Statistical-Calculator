@@ -88,12 +88,19 @@ ui <- fluidPage(
 server <- function(input, output) {
   
   # Observer to handle input validation and UI feedback
+  # Observer for input validation
   observe({
     visitors    <- c(A = input$visitorsA, B = input$visitorsB)
     conversions <- c(A = input$conversionsA, B = input$conversionsB)
     
-    if (!checkInputs(visitors, conversions)) {
+    if (!isValidInput(visitors, conversions)) {
       shinyjs::html("errorMessage", "Please enter valid numeric values for visitors and conversions.")
+      showModal(modalDialog(
+        title = "Invalid Input",
+        "Please check the input fields. Ensure all required fields are filled and valid.",
+        easyClose = TRUE,
+        footer = NULL
+      ))
     } else {
       shinyjs::html("errorMessage", "")
     }
