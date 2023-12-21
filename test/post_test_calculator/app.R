@@ -5,12 +5,15 @@ library(shinydashboard)
 library(shinyjs)
 library(tidyverse)
 library(BayesFactor)
+library(shinythemes)
 theme_set(theme_minimal())
 
 source("plot_density_function.R")
 
 ui <- fluidPage(
   # Use shinyjs to hide the default Shiny progress bar
+  theme = shinytheme("flatly"),
+  
   useShinyjs(),
   
   tags$head(tags$link(rel = "stylesheet", type = "text/css", href = "styles.css")),

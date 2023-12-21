@@ -5,7 +5,7 @@ account: alexlabuda
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 10829268
-bundleId: 8071129
+bundleId: 8071140
 url: https://alexlabuda.shinyapps.io/AB-PostTest-Calculator/
 version: 1
 asMultiple: FALSE
