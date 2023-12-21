@@ -28,7 +28,7 @@ params:
   
   # BAYES TEST INPUTS HERE
   sample_size_A: 8500
-  success_A: 1800
+  success_A: 1300
   sample_size_B: 8500
   success_B: 1410
   
@@ -100,7 +100,19 @@ z_score <- (rate_B - rate_A) / sqrt(overall_rate * (1 - overall_rate) * (1/param
 
 # If params$hypothesis == "one.sided" then: pnorm(z_score, lower.tail = FALSE)
 # else 2 * pnorm(z_score)
-p_value <- ifelse(params$hypothesis == "one.sided", pnorm(z_score, lower.tail = FALSE), 2 * pnorm(z_score))
+# p_value <- ifelse(params$hypothesis == "one.sided", pnorm(z_score, lower.tail = FALSE), 2 * pnorm(z_score))
+
+if (params$hypothesis == "two.sided") {
+      p_value <- 2 * pnorm(-abs(z_score)) # Use abs() to handle both positive and negative z-scores
+    } else if (params$hypothesis == "one.sided") {
+      if (z_score < 0) {
+        p_value <- pnorm(z_score, lower.tail = FALSE) # For negative z-scores, no need for lower.tail = FALSE
+      } else {
+        p_value <- pnorm(z_score, lower.tail = FALSE) # For positive z-scores in a one-sided test
+      }
+    } else {
+      p_value <- NULL
+    }
 
 # alpha threshold
 alpha_value <- 1 - params$confidence_level
@@ -162,7 +174,7 @@ The observed difference in conversion rates between the two variations is (`r sc
 Test summary:
 
 | Variation |       Sample Size        |     Conversions      |                      Conversion Rate                       |
-|-----------------|:---------------:|:---------------:|:-------------------:|
+|------------------|:----------------:|:----------------:|:------------------:|
 | Control   | `r params$sample_size_A` | `r params$success_A` | `r round(params$success_A / params$sample_size_A, 3)*100`% |
 | Treatment | `r params$sample_size_B` | `r params$success_B` | `r round(params$success_B / params$sample_size_B, 3)*100`% |
 
@@ -170,11 +182,11 @@ Test summary:
 
 Test parameters:
 
-| Lift (%)                                                              |               Confidence Level               |   Test Type   |        P-value        |
-|-----------------|:---------------:|:---------------:|:-------------------:|
-| `r scales::percent(relative_uplift_conversion_rate, accuracy = 0.01)` | `r scales::percent(params$confidence_level)` | `r test_type` | `r round(p_value, 4)` |
+| Lift (%)                                                              |               Confidence Level               |   Test Type   |    P-value    |  Z-score   |
+|---------------|:-------------:|:-------------:|:-------------:|:--------------|
+| `r scales::percent(relative_uplift_conversion_rate, accuracy = 0.01)` | `r scales::percent(params$confidence_level)` | `r test_type` | `r round(as.double(p_value, length = 4), 4)` | `r round(as.double(z_score, length = 4), 4)` |
 
-: Figure 2: Test parameters {.hover tbl-colwidths="\[75, 50, 50, 75\]"}
+: Figure 2: Test parameters {.hover tbl-colwidths="\[75, 50, 50, 75, 75\]"}
 
 ## Test Results
 
