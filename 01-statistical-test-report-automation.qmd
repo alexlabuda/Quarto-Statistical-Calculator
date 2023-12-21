@@ -154,7 +154,6 @@ call_out_text <- case_when(
 
 ## Test Results
 
-<br>
 
 ::: {.callout-`r callout`} 
 ## `r ifelse(test_outcome == 1, "Significant Test Result!", "The test result is not significant!")`
@@ -163,7 +162,7 @@ The observed difference in conversion rates between the two variations is (`r sc
 :::
 
 
-Test parameters:
+**Test parameters:**
 
 | Lift (%)                                                              |               Confidence Level               |   Test Type   |    P-value    |  Z-score   |
 |---------------|:-------------:|:-------------:|:-------------:|:--------------|
@@ -176,7 +175,7 @@ Test parameters:
 ::: panel-tabset
 ## Bayesian Test
 
-The expected distributions of variation A and B.
+**The expected distributions of variation A and B.**
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, out.width = "100%", fig.align = "center", fig.height=2.5}
 df |>
@@ -208,7 +207,7 @@ df |>
 
 Control confidence interval is `r round(ci_lower_A, 3)*100`% to `r round(ci_upper_A, 3)*100`%.
 
-Treatment confidence interval is  is `r round(ci_lower_B, 3)*100`% to `r round(ci_upper_B, 3)*100`%.
+Treatment confidence interval is `r round(ci_lower_B, 3)*100`% to `r round(ci_upper_B, 3)*100`%.
 
 ```{r include=FALSE}
 # Define labels and errors for the confidence intervals
@@ -274,7 +273,6 @@ p
 
 ## Test Inputs & Specifications
 
-Test summary:
 
 | Variation |       Sample Size        |     Conversions      |                      Conversion Rate                       |
 |------------------|:----------------:|:----------------:|:------------------:|
