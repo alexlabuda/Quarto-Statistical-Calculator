@@ -144,7 +144,7 @@ callout <- case_when(
 )
 
 call_out_text <- case_when(
-  test_outcome == 1 & relative_uplift_conversion_rate > 0 ~ "is large enough to declare a significant winner. There is evidence of a difference in performance between A and B.",
+  test_outcome == 1 & relative_uplift_conversion_rate > 0 ~ "The difference is large enough to declare a significant winner. There is evidence of a difference in performance between A and B.",
   test_outcome == 1 & relative_uplift_conversion_rate < 0 ~ "There is evidence of a difference in performance between A and B. However, the performance of variation B is worse than variation A.",
   test_outcome == 0                                       ~ "is not big enough to declare a significant winner. There is no real difference in performance between A and B or you need to collect more data.",
 )
@@ -152,33 +152,16 @@ call_out_text <- case_when(
 # call_out_text <- ifelse(test_outcome == 1, "is large enough to declare a significant winner. There is evidence of a difference in performance between A and B.", "is not big enough to declare a significant winner. There is no real difference in performance between A and B or you need to collect more data." )
 ```
 
-## Overview
+## Test Results
 
-Company ABC has been experiencing a decline in the number of conversions on their website in the last six months. The marketing team has been tasked with increasing the number of conversions.
-
-The team has decided on a new landing page to determine if it will increase the number of conversions.
-
-Zion & Zion ran an A/B test to determine if a new landing page would increase the number of conversions.
-
-The test was run for 30 days and the results are as follows:
+<br>
 
 ::: {.callout-`r callout`} 
 ## `r ifelse(test_outcome == 1, "Significant Test Result!", "The test result is not significant!")`
 
 The observed difference in conversion rates between the two variations is (`r scales::percent(relative_uplift_conversion_rate, accuracy = 0.01)`). `r call_out_text`
-
 :::
 
-## Test inputs & Specifications
-
-Test summary:
-
-| Variation |       Sample Size        |     Conversions      |                      Conversion Rate                       |
-|------------------|:----------------:|:----------------:|:------------------:|
-| Control   | `r params$sample_size_A` | `r params$success_A` | `r round(params$success_A / params$sample_size_A, 3)*100`% |
-| Treatment | `r params$sample_size_B` | `r params$success_B` | `r round(params$success_B / params$sample_size_B, 3)*100`% |
-
-: Figure 1: Test summary {.hover tbl-colwidths="\[75, 50, 50, 75\]"}
 
 Test parameters:
 
@@ -186,54 +169,50 @@ Test parameters:
 |---------------|:-------------:|:-------------:|:-------------:|:--------------|
 | `r scales::percent(relative_uplift_conversion_rate, accuracy = 0.01)` | `r scales::percent(params$confidence_level)` | `r test_type` | `r round(as.double(p_value, length = 4), 4)` | `r round(as.double(z_score, length = 4), 4)` |
 
-: Figure 2: Test parameters {.hover tbl-colwidths="\[75, 50, 50, 75, 75\]"}
+: {.hover}
 
-## Test Results
+<br>
 
 ::: panel-tabset
 ## Bayesian Test
 
-The probability that the new landing page (B) is better than the existing page (A) is `r round(prob_B_better_than_A, 3)*100`%.
+The expected distributions of variation A and B.
 
-The following histograms show the posterior distributions for the conversion rates of the two landing pages:
-
-```{r echo=FALSE, fig.width=9, fig.height=4.5, warning=FALSE, message=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE, out.width = "100%", fig.align = "center", fig.height=2.5}
 df |>
   ggplot(aes(x)) +
-  geom_area(aes(y = Group_A, fill = "Group A"), alpha = 0.45) +  # Using geom_area for Group A
-  geom_area(aes(y = Group_B, fill = "Group B"), alpha = 0.45) +  # Using geom_area for Group B
-  scale_fill_manual(
-    values = c("Group A" = "#2E465F", "Group B" = "#D81B60"),
-    name   = "Groups:"
-  ) +
+  geom_area(aes(y = Group_A), fill = "#2E465F", alpha = 0.45) +  # Using geom_area for Group A
+  geom_area(aes(y = Group_B), fill = "#D81B60", alpha = 0.45) +  # Using geom_area for 
+  geom_vline(xintercept = rate_A, color = "#2E465F", linetype = "dashed", linewidth = 0.35) +
+  geom_vline(xintercept = rate_B, color = "#D81B60", linetype = "dashed", linewidth = 0.35) +
+  annotate("text", x = rate_A, y = 50, label = paste0("CR Control: ", round(rate_A*100, 1), "%"), color = "#2E465F", size = 2.2, vjust = 1.5, angle = 90) +
+  annotate("text", x = rate_B, y = 50, label = paste0("CR Treatment: ", round(rate_B*100, 1), "%"), color = "#D81B60", size = 2.2, vjust = 1.5, angle = 90) +
   labs(
     title = NULL,
-    x     = "Conversion Rate", 
-    y     = "Density"
+    x     = NULL, 
+    y     = NULL
   ) +
-  xlim(min_x_lim, max_x_lim) +
-  theme(legend.position = "bottom")
+  scale_x_continuous(limits = c(min_x_lim, max_x_lim), labels = scales::percent) +
+  scale_y_continuous(limits = c(0, 110)) +
+  theme(
+    legend.position = "top",
+    panel.grid  = element_blank(),
+    axis.text.x = element_text(size = 7),
+    axis.text.y = element_blank()
+    )
 ```
 
 ## Frequentist Test
 
-**Test Specifications:**
+**Confidence Level:** `r scales::percent(params$confidence_level)`
 
-```         
-- Confidence level is `r params$confidence_level*100`%.
+Control confidence interval is `r round(ci_lower_A, 3)*100`% to `r round(ci_upper_A, 3)*100`%.
 
-- Reject the NULL hypothesis if the P-Value is less than `r 1-params$confidence_level`.
+Treatment confidence interval is  is `r round(ci_lower_B, 3)*100`% to `r round(ci_upper_B, 3)*100`%.
 
-- The P-Value for a one-sided test is `r round(p_value, 3)`.
-```
-
-90% Confidence Interval for Variation A is `r round(ci_lower_A, 3)*100`% to `r round(ci_upper_A, 3)*100`%.
-
-90% Confidence Interval for Variation B is `r round(ci_lower_B, 3)*100`% to `r round(ci_upper_B, 3)*100`%.
-
-```{r include=FALSE, warning=FALSE, message=FALSE}
+```{r include=FALSE}
 # Define labels and errors for the confidence intervals
-labels <- c('Control', 'Variant 1')
+labels <- c('Control', 'Treatment')
 conversion_rates <- c(rate_A, rate_B)
 ci_lower_bounds <- c(ci_lower_A, ci_lower_B)
 ci_upper_bounds <- c(ci_upper_A, ci_upper_B)
@@ -251,25 +230,28 @@ data <- data.frame(
 max_y_lim <- max(data$Upper)
 ```
 
-**Confidence intervals**
 
-```{r echo=FALSE, fig.width=9, fig.height=4.5, warning=FALSE, message=FALSE}
+```{r echo=FALSE, warning=FALSE, message=FALSE, out.width = "100%", fig.align = "center", fig.height=2.1}
 my_colors <- c("#2E465F", "#D81B60")
 
 # Create the horizontal bar plot with confidence intervals
 p <- ggplot(data, aes(x = Variation, y = ConversionRate)) +
   geom_bar(stat = "identity", aes(fill = Variation), position = position_dodge(),
-           show.legend = FALSE, alpha = 0.8) +
+           show.legend = FALSE, alpha = 0.45) +
   geom_errorbar(aes(ymin = ConversionRate - CIError, ymax = ConversionRate + CIError), width = 0.15, alpha = 0.8) +
   coord_flip() +  # Flip the coordinates to make the bars horizontal
   labs(
     title = NULL,
-    x     = NULL, y = "Conversion Rate"
+    x     = NULL, y = NULL
   ) + 
-  ylim(0, max_y_lim *1.15) +
+  # ylim(0, max_y_lim *1.15) +
+  scale_y_continuous(labels = scales::percent, limits = c(0, max_y_lim *1.3)) +
   theme_minimal() +
   theme(
-    legend.position = "none"
+    legend.position = "none",
+    panel.grid      = element_blank(),
+    axis.text.y    = element_text(size = 7),
+    axis.text.x    = element_text(size = 7),
     ) +
     scale_fill_manual(values = my_colors)
 
@@ -278,10 +260,27 @@ p <-
   p + geom_text(
     aes(x = Variation, y = ConversionRate + CIError,
         label = paste(sprintf('%.1f%%', Lower * 100), '-', sprintf('%.1f%%', Upper * 100))),
-    position = position_dodge(0.9), hjust = -0.2,
-    alpha = 0.85)
+    position = position_dodge(0.9),
+    hjust = -0.2,
+    alpha = 0.85,
+    size = 2.5)
 
 # Print the plot
 p
 ```
 :::
+
+<br>
+
+## Test Inputs & Specifications
+
+Test summary:
+
+| Variation |       Sample Size        |     Conversions      |                      Conversion Rate                       |
+|------------------|:----------------:|:----------------:|:------------------:|
+| Control   | `r params$sample_size_A` | `r params$success_A` | `r round(params$success_A / params$sample_size_A, 3)*100`% |
+| Treatment | `r params$sample_size_B` | `r params$success_B` | `r round(params$success_B / params$sample_size_B, 3)*100`% |
+
+: {.hover}
+
+
