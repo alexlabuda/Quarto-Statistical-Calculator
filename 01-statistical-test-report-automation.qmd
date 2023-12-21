@@ -146,7 +146,7 @@ callout <- case_when(
 call_out_text <- case_when(
   test_outcome == 1 & relative_uplift_conversion_rate > 0 ~ "The difference is large enough to declare a significant winner. There is evidence of a difference in performance between A and B.",
   test_outcome == 1 & relative_uplift_conversion_rate < 0 ~ "There is evidence of a difference in performance between A and B. However, the performance of variation B is worse than variation A.",
-  test_outcome == 0                                       ~ "is not big enough to declare a significant winner. There is no real difference in performance between A and B or you need to collect more data.",
+  test_outcome == 0                                       ~ "The difference is not large enough to declare a significant winner. There is no real difference in performance between A and B or you need to collect more data.",
 )
 
 # call_out_text <- ifelse(test_outcome == 1, "is large enough to declare a significant winner. There is evidence of a difference in performance between A and B.", "is not big enough to declare a significant winner. There is no real difference in performance between A and B or you need to collect more data." )
