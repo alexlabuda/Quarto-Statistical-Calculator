@@ -1,11 +1,13 @@
 ---
 title: "Statistical Testing Results"
-subtitle: "Company ABC"
+subtitle: "Company ABC"  # Add company name here
 author: "Zion & Zion"
 date: last-modified
 date-format: "MM-DD-YYYY"
-description: "A/B Testing Results"
+description: "A/B Testing Results Evaluation"
 title-block-banner: "#FFFFFF"
+callout-icon: false
+callout-appearance: simple
 format: 
   html:
     self_contained: true
@@ -23,17 +25,22 @@ theme:
 css: styles/styles.css
   
 params:
+  
+  # BAYES TEST INPUTS HERE
   sample_size_A: 8500
-  success_A: 1500
+  success_A: 1800
   sample_size_B: 8500
   success_B: 1410
   
-  visitors_A: 80000
-  conversions_A: 1600
-  confidence_level: 0.90
+  # FREQUENTIST TEST INPUTS HERE
+  # TODO: Revise code to use only 1 set of inputs for both methods ###
   
-  visitors_B: 80000
-  conversions_B: 1700
+  # TEST SETTINGS HERE
+  hypothesis: "two.sided" # one.sided or two.sided
+  confidence_level: 0.95  # 0.90, 0.95, 0.99
+  
+editor_options: 
+  chunk_output_type: console
 ---
 
 ```{r setup, include=FALSE}
@@ -57,57 +64,18 @@ sim_B <- rbeta(10000, post_B[1], post_B[2])
 # Probability that B is better than A
 prob_B_better_than_A <- mean(sim_B > sim_A)
 
-# Data
-data_tbl <- read_csv("data/report_212300_1700686614813.csv") |> 
-  janitor::clean_names() 
+# Conversion rates
+rates <- c(A = params$success_A / params$sample_size_A, B = params$success_B / params$sample_size_B)
+
+# Relative uplift in conversion rate
+relative_uplift_conversion_rate <- (rates["B"] - rates["A"]) / rates["A"]
+
+test_type <- ifelse(params$hypothesis == "one.sided", "One-sided", "Two-sided")
 ```
 
-
-
-```{r, include=FALSE}
-data_tbl |> glimpse()
-
-# Should we be filtering by only NEW visitors?
-# We have duplicated visitor_code - how should we handle this?
-# Should we keep only distinct visitor_code, experiment_brian_a_a_test_4_assignation combinations?
-
-data_tbl |> 
-  distinct(visitor_code, experiment_brian_a_a_test_4_assignation, .keep_all = TRUE) |> 
-  group_by(experiment_brian_a_a_test_4_assignation) |> 
-  summarise(
-    count_visitors = n_distinct(visitor_code),
-    success_A      = sum(goal_insights_page),
-    success_B      = sum(goal_contact_us_page)
-  )
-  
-```
-
-
-## Overview
-
-Company ABC has been experiencing a decline in the number of conversions on their website in the last six months. The marketing team has been tasked with increasing the number of conversions. 
-
-The team has decided on a new landing page to determine if it will increase the number of conversions. 
-
-Zion & Zion ran an A/B test to determine if a new landing page would increase the number of conversions. 
-
-The test was run for 30 days and the results are as follows:
-
-
-## Test Results
-
-::: {.panel-tabset}
-
-## Bayesian Test
-
-The probability that the new landing page (B) is better than the existing page (A) is `r round(prob_B_better_than_A, 3)*100`%.
-
-The following histograms show the posterior distributions for the conversion rates of the two landing pages:
-
-```{r echo=FALSE, fig.width=9, fig.height=4.5, warning=FALSE, message=FALSE}
+```{r include=FALSE}
 max_x_lim <- max(max(sim_A), max(sim_B))
 min_x_lim <- min(min(sim_A), min(sim_B))
-
 
 # Create a sequence of conversion rates
 x <- seq(0, 1, length.out = 1000)
@@ -118,31 +86,108 @@ density_B <- dbeta(x, post_B[1], post_B[2])
 
 # Create a data frame for plotting
 df <- data.frame(x, Group_A = density_A, Group_B = density_B)
-
-# # Plotting
-# df |>
-#   ggplot(aes(x)) +
-#   geom_line(aes(y = Group_A, color = "Group A", color = "#2E465F"), linewidth = 0.8) +
-#   geom_line(aes(y = Group_B, color = "Group B"), linewidth = 0.8) +
-#   labs(
-#     title = NULL,
-#     x     = "Conversion Rate", y = "Density") +
-#   scale_colour_manual(
-#     "",
-#     breaks = c("Group A", "Group B"),
-#     values = c("Group A" = "#2E465F", "Group B" = "#D81B60")
-#   ) +
-#   xlim(min_x_lim, max_x_lim) +
-#   theme(
-#     legend.position = "bottom"
-#     )
 ```
+
+```{r include=FALSE}
+rate_A <- rates["A"]
+rate_B <- rates["B"]
+
+# Pooled conversion rate
+overall_rate <- (params$success_A + params$success_B) / (params$sample_size_A + params$sample_size_B)
+
+# Z-Score for p-value calculation
+z_score <- (rate_B - rate_A) / sqrt(overall_rate * (1 - overall_rate) * (1/params$sample_size_A + 1/params$sample_size_B))
+
+# If params$hypothesis == "one.sided" then: pnorm(z_score, lower.tail = FALSE)
+# else 2 * pnorm(z_score)
+p_value <- ifelse(params$hypothesis == "one.sided", pnorm(z_score, lower.tail = FALSE), 2 * pnorm(z_score))
+
+# alpha threshold
+alpha_value <- 1 - params$confidence_level
+
+# Test outcome 1 = reject null hypothesis, 0 = fail to reject null hypothesis
+test_outcome <- ifelse(p_value < alpha_value, 1, 0)
+
+# Z-Score for 90% Confidence Level (One-Sided)
+z_score_CL <- qnorm(params$confidence_level)
+
+# Confidence Interval for Variation A
+se_A <- sqrt(rate_A * (1 - rate_A) / params$sample_size_A)
+ci_lower_A <- rate_A - z_score_CL * se_A
+ci_upper_A <- rate_A + z_score_CL * se_A
+
+# Confidence Interval for Variation B
+se_B <- sqrt(rate_B * (1 - rate_B) / params$sample_size_B)
+ci_lower_B <- rate_B - z_score_CL * se_B
+ci_upper_B <- rate_B + z_score_CL * se_B
+
+# Dynamic callout
+# callout       <- ifelse(test_outcome == 1, "tip", "important")
+
+# Revise to take into account negative left
+callout <- case_when(
+  test_outcome == 1 & relative_uplift_conversion_rate > 0 ~ "tip",
+  test_outcome == 1 & relative_uplift_conversion_rate < 0 ~ "important",
+  test_outcome == 0                                       ~ "important",
+)
+
+call_out_text <- case_when(
+  test_outcome == 1 & relative_uplift_conversion_rate > 0 ~ "is large enough to declare a significant winner. There is evidence of a difference in performance between A and B.",
+  test_outcome == 1 & relative_uplift_conversion_rate < 0 ~ "There is evidence of a difference in performance between A and B. However, the performance of variation B is worse than variation A.",
+  test_outcome == 0                                       ~ "is not big enough to declare a significant winner. There is no real difference in performance between A and B or you need to collect more data.",
+)
+
+# call_out_text <- ifelse(test_outcome == 1, "is large enough to declare a significant winner. There is evidence of a difference in performance between A and B.", "is not big enough to declare a significant winner. There is no real difference in performance between A and B or you need to collect more data." )
+```
+
+## Overview
+
+Company ABC has been experiencing a decline in the number of conversions on their website in the last six months. The marketing team has been tasked with increasing the number of conversions.
+
+The team has decided on a new landing page to determine if it will increase the number of conversions.
+
+Zion & Zion ran an A/B test to determine if a new landing page would increase the number of conversions.
+
+The test was run for 30 days and the results are as follows:
+
+::: {.callout-`r callout`} 
+## `r ifelse(test_outcome == 1, "Significant Test Result!", "The test result is not significant!")`
+
+The observed difference in conversion rates between the two variations is (`r scales::percent(relative_uplift_conversion_rate, accuracy = 0.01)`). `r call_out_text`
+
+:::
+
+## Test inputs & Specifications
+
+Test summary:
+
+| Variation |       Sample Size        |     Conversions      |                      Conversion Rate                       |
+|-----------------|:---------------:|:---------------:|:-------------------:|
+| Control   | `r params$sample_size_A` | `r params$success_A` | `r round(params$success_A / params$sample_size_A, 3)*100`% |
+| Treatment | `r params$sample_size_B` | `r params$success_B` | `r round(params$success_B / params$sample_size_B, 3)*100`% |
+
+: Figure 1: Test summary {.hover tbl-colwidths="\[75, 50, 50, 75\]"}
+
+Test parameters:
+
+| Lift (%)                                                              |               Confidence Level               |   Test Type   |        P-value        |
+|-----------------|:---------------:|:---------------:|:-------------------:|
+| `r scales::percent(relative_uplift_conversion_rate, accuracy = 0.01)` | `r scales::percent(params$confidence_level)` | `r test_type` | `r round(p_value, 4)` |
+
+: Figure 2: Test parameters {.hover tbl-colwidths="\[75, 50, 50, 75\]"}
+
+## Test Results
+
+::: panel-tabset
+## Bayesian Test
+
+The probability that the new landing page (B) is better than the existing page (A) is `r round(prob_B_better_than_A, 3)*100`%.
+
+The following histograms show the posterior distributions for the conversion rates of the two landing pages:
 
 ```{r echo=FALSE, fig.width=9, fig.height=4.5, warning=FALSE, message=FALSE}
 df |>
   ggplot(aes(x)) +
-  # geom_line(aes(y = Group_A, color = "Group A"), linewidth = 0.8) +
-  # geom_line(aes(y = Group_B, color = "Group B"), linewidth = 0.8) +
   geom_area(aes(y = Group_A, fill = "Group A"), alpha = 0.45) +  # Using geom_area for Group A
   geom_area(aes(y = Group_B, fill = "Group B"), alpha = 0.45) +  # Using geom_area for Group B
   scale_fill_manual(
@@ -158,45 +203,17 @@ df |>
   theme(legend.position = "bottom")
 ```
 
-
-
-```{r, include=FALSE, warning=FALSE, message=FALSE}
-rate_A <- params$conversions_A / params$visitors_A
-rate_B <- params$conversions_B / params$visitors_B
-
-# Pooled conversion rate
-overall_rate <- (params$conversions_A + params$conversions_B) / (params$visitors_A + params$visitors_B)
-
-# Z-Score for p-value calculation
-z_score <- (rate_B - rate_A) / sqrt(overall_rate * (1 - overall_rate) * (1/params$visitors_A + 1/params$visitors_B))
-
-# P-Value for a one-sided test
-p_value <- pnorm(z_score, lower.tail = FALSE)
-
-# Z-Score for 90% Confidence Level (One-Sided)
-z_score_CL <- qnorm(params$confidence_level)
-
-# Confidence Interval for Variation A
-se_A <- sqrt(rate_A * (1 - rate_A) / params$visitors_A)
-ci_lower_A <- rate_A - z_score_CL * se_A
-ci_upper_A <- rate_A + z_score_CL * se_A
-
-# Confidence Interval for Variation B
-se_B <- sqrt(rate_B * (1 - rate_B) / params$visitors_B)
-ci_lower_B <- rate_B - z_score_CL * se_B
-ci_upper_B <- rate_B + z_score_CL * se_B
-
-```
-
 ## Frequentist Test
 
 **Test Specifications:**
 
-    - Confidence level is `r params$confidence_level*100`%.
+```         
+- Confidence level is `r params$confidence_level*100`%.
 
-    - Reject the NULL hypothesis if the P-Value is less than `r 1-params$confidence_level`.
+- Reject the NULL hypothesis if the P-Value is less than `r 1-params$confidence_level`.
 
-    - The P-Value for a one-sided test is `r round(p_value, 3)`.
+- The P-Value for a one-sided test is `r round(p_value, 3)`.
+```
 
 90% Confidence Interval for Variation A is `r round(ci_lower_A, 3)*100`% to `r round(ci_upper_A, 3)*100`%.
 
@@ -255,6 +272,4 @@ p <-
 # Print the plot
 p
 ```
-
-
 :::
