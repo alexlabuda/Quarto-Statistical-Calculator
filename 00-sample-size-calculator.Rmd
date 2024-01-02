@@ -26,6 +26,9 @@ output:
 ---
 
 ```{r setup, include=FALSE}
+"#48718f"
+"#262829"
+"#3ADAC6"
 library(flexdashboard)
 library(tidyverse)
 library(broom)
@@ -218,8 +221,8 @@ renderPlot({
         scale_x_continuous(labels = scales::comma_format()) +
         scale_color_gradient(high = "#0077CC", low = "#B8E0C5",
                              labels = scales::comma_format()) +
-        labs(x = "Sample size", y = "Minimum Detectable Effect",
-             title = "What is the Minimum detectable effect by sample size?") +
+        labs(x     = "Sample size", y = "Minimum Detectable Effect",
+             title = NULL) +
     theme(
       panel.grid   = element_blank(),
       plot.title   = element_text(family = "roboto", size = 18, face = "bold",
