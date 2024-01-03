@@ -52,6 +52,10 @@ data1 |>
   scale_y_continuous(labels = scales::percent_format(),
                      limits = c(0, NA)) +
   scale_x_continuous(labels = scales::comma_format()) +
+  geom_text(aes(label = paste(scales::number(n, big.mark = ","), scales::percent(effect, accuracy = 0.1), sep = " | ")),
+            vjust = -0.5,
+            size = 4,
+            color = "black") +
   scale_color_gradient(
     high = "#0077CC",
     low = "#B8E0C5",
